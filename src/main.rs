@@ -1,13 +1,16 @@
-mod config;
-mod types;
 mod commands;
+mod config;
+mod embeds;
+mod services;
+mod types;
+mod utils;
 
-use serenity::all::ClientBuilder;
-use serenity::prelude::GatewayIntents;
-use crate::config::load_config;
 use crate::commands::commands;
+use crate::config::load_config;
 
 use dotenv::dotenv;
+use serenity::all::{ClientBuilder, GatewayIntents};
+use types::Data;
 
 #[tokio::main]
 async fn main() {
@@ -16,24 +19,33 @@ async fn main() {
 
     let config = load_config();
     let intents = GatewayIntents::non_privileged();
-    let bot_config = config.clone();
+    let discord_token = config.discord_token.clone();
 
     let framework = poise::Framework::builder()
-        .options(poise::FrameworkOptions{
+        .options(poise::FrameworkOptions {
             commands: commands(),
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(bot_config)
+                Ok(Data {
+                    config,
+                })
             })
         })
         .build();
 
-    let client = ClientBuilder::new(&config.discord_token, intents)
+    let client = ClientBuilder::new(discord_token, intents)
+        .event_handler(utils::Handler)
         .framework(framework)
         .await;
 
-    client.unwrap().start().await.unwrap();
+    tokio::spawn(async move {
+        client.unwrap().start().await.unwrap();
+    });
+
+    let _signal_err = tokio::signal::ctrl_c().await;
+
+    println!("received ctrl-c");
 }

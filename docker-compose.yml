@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - RUST_LOG=info
     env_file:
       - .env.production
     restart: unless-stopped

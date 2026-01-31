@@ -4,7 +4,10 @@ use serenity::{all::MessageId, futures::StreamExt};
 
 use crate::types::{Context, Error};
 
-#[poise::command(slash_command)]
+#[poise::command(
+    slash_command,
+    description_localized("pt-BR", "Limpa mensagens no canal")
+)]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
     let channel = ctx.channel_id();
     let author = ctx.author();
@@ -35,19 +38,19 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
                     channel.delete_messages(&ctx, message_ids).await?;
 
                     ctx.say(format!(
-                        "Ah, as mensagens foram apagadas, né? Foi em <t:{}>... ✨💖",
+                        "Houve uma limpeza de mensagens — <t:{}>.",
                         Utc::now().timestamp()
                     ))
                     .await?;
                 } else {
-                    ctx.say("Desculpe, apenas o dono do servidor pode apagar mensagens! 💔")
+                    ctx.say("Sinto muito. Só o dono do servidor pode apagar mensagens")
                         .await?;
                 }
             }
             Err(_) => {}
         };
     } else {
-        ctx.say("Desculpe, você pode executar isso apenas em um servidor! 💔")
+        ctx.say("Sinto muito — isso só pode ser executado em um servidor")
             .await?;
     }
 

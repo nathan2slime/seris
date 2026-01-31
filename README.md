@@ -1,42 +1,117 @@
+# Seris
 
-## Cha Hae-In
+A calm and precise Discord bot written in **Rust**, built with **serenity**.
 
-Oi! 💖 Este é um bot fofinho para Discord feito com muito amor em **Rust**, usando a biblioteca `serenity` para conversar com a API do Discord! 😍 Ele está configurado para usar o framework `poise` para facilitar a criação de comandos e pode ler variáveis de ambiente do arquivo `.env`. 🐾 O bot também tem uma descrição bem fofa da **Cha Hae-In**, uma caçadora incrível de *Solo Leveling*! ✨ Ela é uma caçadora de rank S, super forte 💪, graciosa 💖 e leal. Uma verdadeira heroína que usa uma espada super poderosa para proteger quem ama! 🌸 Ela é uma das personagens mais importantes de *Solo Leveling*, sempre ao lado do protagonista, Sung Jin-Woo, ajudando-o em sua jornada cheia de aventuras. 🏹
+Seris speaks softly, but executes with certainty. Designed to be minimal, reliable, and efficient — nothing more than what is needed.
 
 ---
 
-### Setup e Requisitos
+## 🌙 Philosophy
 
-#### 1. Instalar o Rust
+> *Silence over noise. Clarity over excess.*
 
-Se você ainda não tem o Rust, não se preocupe! 🥺 Você pode baixar e instalar com facilidade através do [site oficial do Rust](https://www.rust-lang.org/). 🌟
+Seris is not flashy. She focuses on correctness, stability, and clean execution. Every feature exists for a reason.
 
-#### 2. Criar o Arquivo `.env`
+---
 
-Na raiz do projeto, crie um arquivo `.env` com o seguinte conteúdo:
+## ✨ Features
+
+* Slash commands (Discord Interactions)
+* Clean permission boundaries
+* Predictable behavior
+* Minimal Docker footprint
+* Fast startup, low memory usage
+
+---
+
+## 🧭 Commands
+
+All commands are **slash commands** (`/`).
+
+1. **Ping**
+   `/ping` — Confirms responsiveness.
+
+2. **Clear Messages**
+   `/clear` — Removes messages (restricted permissions).
+
+3. **NASA – Astronomy Picture of the Day**
+   `/nasa apod` — Displays NASA’s daily image.
+
+4. **Random Anime**
+   `/anime random` — Suggests an anime title.
+
+---
+
+## ⚙️ Requirements
+
+* Rust **1.83+**
+* Discord Bot Token
+* Optional: Docker
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the project root:
 
 ```env
-CHA__DISCORD_TOKEN=seu_token_aqui
+DISCORD_TOKEN=""
+RUST_LOG="info"
+DATABASE_URL="sqlite::memory:seris"
+NASA_API_KEY=""
 ```
 
-Substitua `seu_token_aqui` pelo token verdadeiro do seu bot Discord. 💖✨
+* `DISCORD_TOKEN`: Discord bot token
+* `RUST_LOG`: Log level
+* `DATABASE_URL`: Database connection
+* `NASA_API_KEY`: Required for NASA commands
 
-#### 3. Instalar Dependências e Rodar
+---
 
-No terminal, vá até a pasta do projeto e execute o comando para instalar as dependências e colocar a **Cha Hae-In** em ação:
+## ▶️ Running Locally
 
 ```bash
-cargo run
+cargo run --release
 ```
 
-Yay! O bot vai estar prontinho para começar! 🥳💖
+---
 
-#### 4. Instalar o Cargo (caso não tenha)
+## 🐳 Docker (Minimal Image)
 
-Se você ainda não tem o Cargo, não se preocupe! 😇 É super fácil de instalar! Basta rodar este comando fofo:
+Seris is built to run in **ultra-minimal containers**.
+
+### Build
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+docker build -t seris .
 ```
 
-Agora, está tudo pronto para você começar a se divertir com o bot! 🌸💕
+### Run
+
+```bash
+docker run --env-file .env seris
+```
+
+* Image size: **~4–6 MB**
+* Static binary
+* No shell, no package manager
+* Runs as non-root
+
+---
+
+## 🧼 Production Notes
+
+* Uses `rustls` (no OpenSSL)
+* Compatible with `scratch` or `distroless`
+* Reduced attack surface
+* Deterministic behavior
+
+---
+
+## 📜 License
+
+MIT
+
+---
+
+> *Seris does not rush. She executes.*
