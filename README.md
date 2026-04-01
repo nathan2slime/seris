@@ -81,47 +81,41 @@ cargo run --release
 
 ## 📦 GitHub Release Assets
 
-When a GitHub Release is published, the workflow in `.github/workflows/release-assets.yml` builds a Linux release bundle and attaches it to the release.
+When a GitHub Release is published, `.github/workflows/release-assets.yml` builds and uploads a raw Linux binary plus a bundled Linux installer.
 
 Included assets:
 
+* `seris-<tag>-x86_64-unknown-linux-gnu`
 * `seris-<tag>-x86_64-unknown-linux-gnu.tar.gz`
-* `seris-<tag>-x86_64-unknown-linux-gnu.tar.gz.sha256`
+* `install.sh`
+* matching `.sha256` files
 
-The archive contains:
+Bundle contents:
 
 * `seris`
-* `install.sh`
+* `install-local.sh`
 * `config.example.toml`
 * `README.md`
 
-## 🛠️ System Install With Boot Service
+## 🛠️ Automatic Installers
 
-The release archive includes an `install.sh` for Linux hosts using `systemd`.
-
-Example:
+The Linux bootstrap installer downloads the Linux bundle, installs `seris` into `/opt/seris`, creates a `systemd` service, and enables it on boot.
 
 ```bash
-tar -xzf seris-v0.1.0-x86_64-unknown-linux-gnu.tar.gz
-cd seris-v0.1.0-x86_64-unknown-linux-gnu
-sudo ./install.sh
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh
 ```
 
-The installer:
-
-* copies the binary to `/opt/seris/seris`
-* creates `/opt/seris/.config/seris/config.toml` when missing
-* creates a `seris` system user/group
-* installs `/etc/systemd/system/seris.service`
-* runs `systemctl enable seris.service`
-* starts the service immediately only when the config file is already populated
-
-After installation, fill in `/opt/seris/.config/seris/config.toml` and restart if needed:
+Optional version override:
 
 ```bash
-sudo systemctl restart seris.service
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh -s -- <tag>
 ```
 
+### Local bundle installers
+
+If you prefer extracting a release bundle manually, run the bundled local installer instead:
+
+* Linux: `sudo ./install-local.sh`
 ---
 
 ## 🐳 Docker (Minimal Image)
