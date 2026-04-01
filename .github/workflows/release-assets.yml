@@ -1,0 +1,59 @@
+name: Release Assets
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: seris
+  TARGET: x86_64-unknown-linux-gnu
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ env.TARGET }}
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --locked --release --target "${TARGET}"
+
+      - name: Prepare release bundle
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -eux
+          PACKAGE_DIR="dist/${APP_NAME}-${VERSION}-${TARGET}"
+          mkdir -p "${PACKAGE_DIR}"
+          cp "target/${TARGET}/release/${APP_NAME}" "${PACKAGE_DIR}/"
+          cp install.sh "${PACKAGE_DIR}/"
+          cp README.md "${PACKAGE_DIR}/"
+          cp config.example.toml "${PACKAGE_DIR}/"
+          chmod +x "${PACKAGE_DIR}/install.sh"
+          tar -C dist -czf "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz" "${APP_NAME}-${VERSION}-${TARGET}"
+          sha256sum "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz" > "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz.sha256"
+
+      - name: Upload assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256

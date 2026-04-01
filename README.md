@@ -50,21 +50,26 @@ All commands are **slash commands** (`/`).
 
 ---
 
-## 🔐 Environment Variables
+## 🔐 Configuration
 
-Create a `.env` file in the project root:
+Seris loads its settings from a TOML config file.
 
-```env
-DISCORD_TOKEN=""
-RUST_LOG="info"
-DATABASE_URL="sqlite::memory:seris"
-NASA_API_KEY=""
+Default config file locations:
+
+* Linux/macOS: `$XDG_CONFIG_HOME/seris/config.toml` when `XDG_CONFIG_HOME` is set
+* Otherwise: `~/.config/seris/config.toml`
+* Custom path: set `SERIS_CONFIG_FILE=/path/to/config.toml`
+
+Example `config.toml`:
+
+```toml
+discord_token = "..."
+nasa_api_key = "..."
 ```
+* `discord_token`: Discord bot token
+* `nasa_api_key`: Required for NASA commands
 
-* `DISCORD_TOKEN`: Discord bot token
-* `RUST_LOG`: Log level
-* `DATABASE_URL`: Database connection
-* `NASA_API_KEY`: Required for NASA commands
+Seris reads application settings from TOML only. `SERIS_CONFIG_FILE` is only used to override the config file path.
 
 ---
 
@@ -72,6 +77,49 @@ NASA_API_KEY=""
 
 ```bash
 cargo run --release
+```
+
+## 📦 GitHub Release Assets
+
+When a GitHub Release is published, the workflow in `.github/workflows/release-assets.yml` builds a Linux release bundle and attaches it to the release.
+
+Included assets:
+
+* `seris-<tag>-x86_64-unknown-linux-gnu.tar.gz`
+* `seris-<tag>-x86_64-unknown-linux-gnu.tar.gz.sha256`
+
+The archive contains:
+
+* `seris`
+* `install.sh`
+* `config.example.toml`
+* `README.md`
+
+## 🛠️ System Install With Boot Service
+
+The release archive includes an `install.sh` for Linux hosts using `systemd`.
+
+Example:
+
+```bash
+tar -xzf seris-v0.1.0-x86_64-unknown-linux-gnu.tar.gz
+cd seris-v0.1.0-x86_64-unknown-linux-gnu
+sudo ./install.sh
+```
+
+The installer:
+
+* copies the binary to `/opt/seris/seris`
+* creates `/opt/seris/.config/seris/config.toml` when missing
+* creates a `seris` system user/group
+* installs `/etc/systemd/system/seris.service`
+* runs `systemctl enable seris.service`
+* starts the service immediately only when the config file is already populated
+
+After installation, fill in `/opt/seris/.config/seris/config.toml` and restart if needed:
+
+```bash
+sudo systemctl restart seris.service
 ```
 
 ---
