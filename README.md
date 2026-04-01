@@ -116,7 +116,6 @@ curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install
 If you prefer extracting a release bundle manually, run the bundled local installer instead:
 
 * Linux: `sudo ./install-local.sh`
-
 ---
 
 ## 🐳 Docker (Minimal Image)
