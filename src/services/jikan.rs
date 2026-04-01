@@ -5,17 +5,15 @@ use serde::Deserialize;
 pub struct Anime {
     pub synopsis: String,
     pub title: String,
-    pub images: Images, 
+    pub images: Images,
 }
-
 
 #[derive(Deserialize, Debug)]
 pub struct Manga {
     pub synopsis: String,
     pub title: String,
-    pub images: Images, 
+    pub images: Images,
 }
-
 
 #[derive(Deserialize, Debug)]
 pub struct Image {
@@ -39,7 +37,10 @@ fn get_api_url() -> String {
 pub async fn get_random_anime() -> Result<Response<Anime>, Error> {
     let client = Client::new();
 
-    let response = client.get(format!("{}/random/anime", get_api_url())).send().await;
+    let response = client
+        .get(format!("{}/random/anime", get_api_url()))
+        .send()
+        .await;
 
     match response {
         Ok(res) => {
@@ -54,7 +55,10 @@ pub async fn get_random_anime() -> Result<Response<Anime>, Error> {
 pub async fn get_random_manga() -> Result<Response<Manga>, Error> {
     let client = Client::new();
 
-    let response = client.get(format!("{}/random/manga", get_api_url())).send().await;
+    let response = client
+        .get(format!("{}/random/manga", get_api_url()))
+        .send()
+        .await;
 
     match response {
         Ok(res) => {
@@ -65,4 +69,3 @@ pub async fn get_random_manga() -> Result<Response<Manga>, Error> {
         Err(err) => return Err(err),
     }
 }
-
