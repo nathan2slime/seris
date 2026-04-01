@@ -1,4 +1,4 @@
-use config::{Config, Environment, File, FileFormat};
+use config::{Config, File, FileFormat};
 use serde::Deserialize;
 use std::env;
 use std::path::PathBuf;
@@ -24,16 +24,14 @@ fn default_config_path() -> Option<PathBuf> {
 }
 
 pub fn load_config() -> AppConfig {
-    let mut builder = Config::builder();
+    let path = default_config_path().expect("cannot determine config file path");
+    let required = env::var("SERIS_CONFIG_FILE").is_ok();
 
-    if let Some(path) = default_config_path() {
-        builder = builder.add_source(File::new(path.to_string_lossy().as_ref(), FileFormat::Toml).required(false));
-    }
-
-    let c = builder
-        .add_source(Environment::default())
+    let c = Config::builder()
+        .add_source(File::new(path.to_string_lossy().as_ref(), FileFormat::Toml).required(required))
         .build()
         .expect("cannot build config");
 
-    c.try_deserialize().expect("cannot deserialize config")
+    c.try_deserialize()
+        .expect("cannot deserialize config from TOML file")
 }

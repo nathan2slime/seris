@@ -8,14 +8,12 @@ mod utils;
 use crate::commands::commands;
 use crate::config::load_config;
 
-use dotenv::dotenv;
 use serenity::all::{ClientBuilder, GatewayIntents};
 use types::Data;
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
-    dotenv().ok();
 
     let config = load_config();
     let intents = GatewayIntents::non_privileged();

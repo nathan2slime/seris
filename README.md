@@ -56,7 +56,8 @@ Seris loads its settings from a TOML config file.
 
 Default config file locations:
 
-* Linux/macOS: `~/.config/seris/config.toml`
+* Linux/macOS: `$XDG_CONFIG_HOME/seris/config.toml` when `XDG_CONFIG_HOME` is set
+* Otherwise: `~/.config/seris/config.toml`
 * Custom path: set `SERIS_CONFIG_FILE=/path/to/config.toml`
 
 Example `config.toml`:
@@ -67,7 +68,8 @@ nasa_api_key = "..."
 ```
 * `discord_token`: Discord bot token
 * `nasa_api_key`: Required for NASA commands
-* `SERIS_CONFIG_FILE`: Optional custom path to the TOML config file
+
+Seris reads application settings from TOML only. `SERIS_CONFIG_FILE` is only used to override the config file path.
 
 ---
 
@@ -111,7 +113,8 @@ The installer:
 * creates `/opt/seris/.config/seris/config.toml` when missing
 * creates a `seris` system user/group
 * installs `/etc/systemd/system/seris.service`
-* runs `systemctl enable --now seris.service`
+* runs `systemctl enable seris.service`
+* starts the service immediately only when the config file is already populated
 
 After installation, fill in `/opt/seris/.config/seris/config.toml` and restart if needed:
 

@@ -11,9 +11,30 @@ SERVICE_NAME="${APP_NAME}.service"
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
 SYSTEM_USER="${APP_NAME}"
 SYSTEM_GROUP="${APP_NAME}"
+NOLOGIN_SHELL=""
 
 say() {
     printf '%s\n' "$1"
+}
+
+find_nologin_shell() {
+    if command -v nologin >/dev/null 2>&1; then
+        NOLOGIN_SHELL="$(command -v nologin)"
+        return
+    fi
+
+    if [ -x /usr/sbin/nologin ]; then
+        NOLOGIN_SHELL="/usr/sbin/nologin"
+        return
+    fi
+
+    if [ -x /sbin/nologin ]; then
+        NOLOGIN_SHELL="/sbin/nologin"
+        return
+    fi
+
+    say "[seris-chan] I could not find a nologin shell on this system."
+    exit 1
 }
 
 require_root() {
@@ -56,7 +77,7 @@ create_user_and_group() {
             --system \
             --gid "${SYSTEM_GROUP}" \
             --home-dir "${INSTALL_DIR}" \
-            --shell /usr/sbin/nologin \
+            --shell "${NOLOGIN_SHELL}" \
             "${SYSTEM_USER}"
     fi
 }
@@ -100,16 +121,28 @@ EOF
     chmod 0644 "${SERVICE_PATH}"
 }
 
+config_is_ready() {
+    [ -f "${CONFIG_FILE}" ] &&
+    ! grep -Eq '^[[:space:]]*discord_token[[:space:]]*=[[:space:]]*""[[:space:]]*$' "${CONFIG_FILE}" &&
+    ! grep -Eq '^[[:space:]]*nasa_api_key[[:space:]]*=[[:space:]]*""[[:space:]]*$' "${CONFIG_FILE}"
+}
+
 enable_service() {
     say "[seris-chan] Teaching the system how to wake me up on every boot..."
     systemctl daemon-reload
     systemctl enable "${SERVICE_NAME}"
 
-    if systemctl is-active --quiet "${SERVICE_NAME}"; then
-        systemctl restart "${SERVICE_NAME}"
-    else
-        systemctl start "${SERVICE_NAME}"
+    if config_is_ready; then
+        if systemctl is-active --quiet "${SERVICE_NAME}"; then
+            systemctl restart "${SERVICE_NAME}"
+        else
+            systemctl start "${SERVICE_NAME}"
+        fi
+        return
     fi
+
+    say "[seris-chan] Your config file still has placeholder values, so I only enabled the service for boot."
+    say "[seris-chan] Fill in ${CONFIG_FILE}, then start me with: systemctl start ${SERVICE_NAME}"
 }
 
 print_next_steps() {
@@ -122,6 +155,7 @@ print_next_steps() {
 require_root
 require_systemd
 verify_binary_deps
+find_nologin_shell
 create_user_and_group
 install_binary
 write_service
