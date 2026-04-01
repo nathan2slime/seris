@@ -41,7 +41,33 @@ jobs:
           set -eux
           CRATE_VERSION="${VERSION#v}"
           sed -Ei '0,/^version = ".*"/s//version = "'"${CRATE_VERSION}"'"/' Cargo.toml
+          awk -v name="${APP_NAME}" -v version="${CRATE_VERSION}" '
+            BEGIN { in_package = 0; target_package = 0 }
+            /^\[\[package\]\]$/ {
+              in_package = 1
+              target_package = 0
+              print
+              next
+            }
+            in_package && $0 == "name = \"" name "\"" {
+              target_package = 1
+              print
+              next
+            }
+            target_package && /^version = "/ {
+              print "version = \"" version "\""
+              target_package = 0
+              in_package = 0
+              next
+            }
+            print
+          ' Cargo.lock > Cargo.lock.tmp
+          mv Cargo.lock.tmp Cargo.lock
           grep '^version = "' Cargo.toml
+          sed -n '/^\[\[package\]\]$/,/^dependencies = \[$/p' Cargo.lock | grep -A2 '^name = "seris"$'
+
+      - name: Validate locked metadata
+        run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
 
       - name: Build release binary
         run: cargo build --locked --release --target "${TARGET}"
