@@ -79,6 +79,24 @@ Seris reads application settings from TOML only. `SERIS_CONFIG_FILE` is only use
 cargo run --release
 ```
 
+## 🧰 Admin CLI
+
+The installed `seris` binary also provides a small Linux admin CLI.
+
+Examples:
+
+```bash
+seris version
+seris config path
+seris config edit
+seris service status
+seris service restart
+seris service logs --follow
+seris self-update v1.0.1
+```
+
+Commands that touch the installed config file or the `systemd` service will prompt for `sudo` automatically when needed.
+
 ## 📦 GitHub Release Assets
 
 When a GitHub Release is published, `.github/workflows/release-assets.yml` builds and uploads a raw Linux binary plus a bundled Linux installer.
@@ -116,6 +134,7 @@ curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install
 If you prefer extracting a release bundle manually, run the bundled local installer instead:
 
 * Linux: `sudo ./install-local.sh`
+
 ---
 
 ## 🐳 Docker (Minimal Image)

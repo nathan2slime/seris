@@ -34,6 +34,15 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Sync Cargo.toml version with release tag
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -eux
+          CRATE_VERSION="${VERSION#v}"
+          sed -Ei '0,/^version = ".*"/s//version = "'"${CRATE_VERSION}"'"/' Cargo.toml
+          grep '^version = "' Cargo.toml
+
       - name: Build release binary
         run: cargo build --locked --release --target "${TARGET}"
 
