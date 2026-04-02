@@ -34,6 +34,41 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Sync Cargo.toml version with release tag
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -eux
+          CRATE_VERSION="${VERSION#v}"
+          sed -Ei '0,/^version = ".*"/s//version = "'"${CRATE_VERSION}"'"/' Cargo.toml
+          awk -v name="${APP_NAME}" -v version="${CRATE_VERSION}" '
+            BEGIN { in_package = 0; target_package = 0 }
+            /^\[\[package\]\]$/ {
+              in_package = 1
+              target_package = 0
+              print
+              next
+            }
+            in_package && $0 == "name = \"" name "\"" {
+              target_package = 1
+              print
+              next
+            }
+            target_package && /^version = "/ {
+              print "version = \"" version "\""
+              target_package = 0
+              in_package = 0
+              next
+            }
+            print
+          ' Cargo.lock > Cargo.lock.tmp
+          mv Cargo.lock.tmp Cargo.lock
+          grep '^version = "' Cargo.toml
+          sed -n '/^\[\[package\]\]$/,/^dependencies = \[$/p' Cargo.lock | grep -A2 '^name = "seris"$'
+
+      - name: Validate locked metadata
+        run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
+
       - name: Build release binary
         run: cargo build --locked --release --target "${TARGET}"
 
@@ -42,9 +77,10 @@ jobs:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           set -eux
-          PACKAGE_DIR="pkg/${APP_NAME}-${VERSION}-${TARGET}"
+          ASSET_PREFIX="${APP_NAME}-${VERSION}-${TARGET}"
+          PACKAGE_DIR="pkg/${ASSET_PREFIX}"
           mkdir -p "${PACKAGE_DIR}" dist
-          cp "target/${TARGET}/release/${APP_NAME}" "dist/${APP_NAME}-${VERSION}-${TARGET}"
+          cp "target/${TARGET}/release/${APP_NAME}" "dist/${ASSET_PREFIX}"
           cp "target/${TARGET}/release/${APP_NAME}" "${PACKAGE_DIR}/"
           cp install-local.sh "${PACKAGE_DIR}/"
           cp README.md "${PACKAGE_DIR}/"
@@ -52,18 +88,20 @@ jobs:
           chmod +x "${PACKAGE_DIR}/install-local.sh"
           sed "s/__SERIS_DEFAULT_VERSION__/${VERSION}/g" install.sh > dist/install.sh
           chmod +x dist/install.sh
-          tar -C pkg -czf "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz" "${APP_NAME}-${VERSION}-${TARGET}"
-          sha256sum "dist/${APP_NAME}-${VERSION}-${TARGET}" > "dist/${APP_NAME}-${VERSION}-${TARGET}.sha256"
-          sha256sum "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz" > "dist/${APP_NAME}-${VERSION}-${TARGET}.tar.gz.sha256"
+          tar -C pkg -czf "dist/${ASSET_PREFIX}.tar.gz" "${ASSET_PREFIX}"
+          sha256sum "dist/${ASSET_PREFIX}" > "dist/${ASSET_PREFIX}.sha256"
+          sha256sum "dist/${ASSET_PREFIX}.tar.gz" > "dist/${ASSET_PREFIX}.tar.gz.sha256"
           sha256sum dist/install.sh > dist/install.sh.sha256
 
       - name: Upload assets to release
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/install.sh
             dist/install.sh.sha256
-            dist/${{ env.APP_NAME }}-${{ github.event.release.tag_name }}-${{ env.TARGET }}
-            dist/${{ env.APP_NAME }}-${{ github.event.release.tag_name }}-${{ env.TARGET }}.sha256
-            dist/*.tar.gz
-            dist/*.tar.gz.sha256
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}-${{ env.TARGET }}
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}-${{ env.TARGET }}.sha256
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}-${{ env.TARGET }}.tar.gz
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}-${{ env.TARGET }}.tar.gz.sha256

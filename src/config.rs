@@ -15,12 +15,19 @@ fn default_config_path() -> Option<PathBuf> {
     }
 
     if let Ok(xdg_config_home) = env::var("XDG_CONFIG_HOME") {
-        return Some(PathBuf::from(xdg_config_home).join("seris").join("config.toml"));
+        return Some(
+            PathBuf::from(xdg_config_home)
+                .join("seris")
+                .join("config.toml"),
+        );
     }
 
-    env::var("HOME")
-        .ok()
-        .map(|home| PathBuf::from(home).join(".config").join("seris").join("config.toml"))
+    env::var("HOME").ok().map(|home| {
+        PathBuf::from(home)
+            .join(".config")
+            .join("seris")
+            .join("config.toml")
+    })
 }
 
 pub fn load_config() -> AppConfig {

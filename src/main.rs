@@ -1,3 +1,4 @@
+mod cli;
 mod commands;
 mod config;
 mod embeds;
@@ -5,6 +6,7 @@ mod services;
 mod types;
 mod utils;
 
+use crate::cli::CliAction;
 use crate::commands::commands;
 use crate::config::load_config;
 
@@ -14,6 +16,17 @@ use types::Data;
 #[tokio::main]
 async fn main() {
     env_logger::init();
+
+    match cli::dispatch() {
+        Ok(CliAction::RunBot) => {}
+        Ok(CliAction::Exit(code)) => {
+            std::process::exit(code);
+        }
+        Err(message) => {
+            eprintln!("{message}");
+            std::process::exit(1);
+        }
+    }
 
     let config = load_config();
     let intents = GatewayIntents::non_privileged();
@@ -27,9 +40,7 @@ async fn main() {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {
-                    config,
-                })
+                Ok(Data { config })
             })
         })
         .build();
