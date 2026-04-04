@@ -1,3 +1,4 @@
+use log::error;
 use poise::CreateReply;
 
 use crate::types::{Context, Error};
@@ -23,7 +24,7 @@ pub async fn random(ctx: Context<'_>) -> Result<(), Error> {
             .await?;
         }
         Err(_err) => {
-            println!("{:?}", _err);
+            error!("{:?}", _err);
 
             ctx.say("Algo deu errado. Tente novamente mais tarde!")
                 .await?;

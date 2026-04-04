@@ -1,4 +1,3 @@
-use log::info;
 use poise::CreateReply;
 
 use crate::types::{Context, Error};
@@ -20,7 +19,7 @@ pub async fn apod(ctx: Context<'_>) -> Result<(), Error> {
                 .await?;
         }
         Err(_err) => {
-            info!("{:?}", _err);
+            log::error!("{:?}", _err);
             ctx.say("Algo deu errado. Tente novamente mais tarde!")
                 .await?;
         }

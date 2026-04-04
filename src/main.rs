@@ -23,13 +23,13 @@ async fn main() {
             std::process::exit(code);
         }
         Err(message) => {
-            eprintln!("{message}");
+            log::error!("{message}");
             std::process::exit(1);
         }
     }
 
     if let Err(err) = run().await {
-        eprintln!("{err}");
+        log::error!("{err}");
         std::process::exit(1);
     }
 }
@@ -62,7 +62,7 @@ async fn run() -> Result<(), Error> {
             result?;
         }
         _ = tokio::signal::ctrl_c() => {
-            println!("received ctrl-c");
+            log::info!("received ctrl-c");
         }
     }
 
