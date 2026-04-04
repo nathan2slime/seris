@@ -1,15 +1,22 @@
+//! NASA API helpers and response models.
+
 use reqwest::Client;
 use serde::Deserialize;
 
 use crate::types::Error;
 
+/// NASA APOD response payload.
 #[derive(Deserialize, Debug)]
 pub struct AstronomyPictureDay {
+    /// APOD explanation text.
     pub explanation: String,
+    /// High-resolution image URL.
     pub hdurl: String,
+    /// APOD title.
     pub title: String,
 }
 
+/// Fetches NASA's astronomy picture of the day.
 pub async fn get_astronomy_picture_day(api_key: String) -> Result<AstronomyPictureDay, Error> {
     let client = Client::new();
 

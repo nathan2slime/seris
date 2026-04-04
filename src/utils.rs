@@ -1,9 +1,12 @@
+//! Serenity event handling utilities.
+
 use log::info;
 use serenity::{
     all::{Context, EventHandler, Ready},
     async_trait,
 };
 
+/// Event handler used by the bot client.
 pub struct Handler;
 
 #[async_trait]

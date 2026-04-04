@@ -1,3 +1,5 @@
+//! Command-line entry points for service and maintenance tasks.
+
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -9,11 +11,15 @@ const REPO_NAME: &str = "seris";
 const SERVICE_NAME: &str = "seris.service";
 const SYSTEM_CONFIG_PATH: &str = "/opt/seris/.config/seris/config.toml";
 
+/// Top-level CLI actions.
 pub enum CliAction {
+    /// Start the Discord bot.
     RunBot,
+    /// Exit the process with the provided status code.
     Exit(i32),
 }
 
+/// Parses CLI arguments and dispatches to the requested action.
 pub fn dispatch() -> Result<CliAction, String> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() {

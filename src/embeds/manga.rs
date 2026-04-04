@@ -2,6 +2,7 @@ use serenity::{all::CreateEmbed, model::colour};
 
 use crate::services::jikan::Manga;
 
+/// Builds the manga recommendation embed.
 pub fn basic(data: Manga) -> CreateEmbed {
     CreateEmbed::new()
         .title(data.title)

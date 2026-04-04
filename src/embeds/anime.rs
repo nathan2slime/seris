@@ -2,6 +2,7 @@ use serenity::{all::CreateEmbed, model::colour};
 
 use crate::services::jikan::Anime;
 
+/// Builds the anime recommendation embed.
 pub fn basic(data: Anime) -> CreateEmbed {
     CreateEmbed::new()
         .title(data.title)
