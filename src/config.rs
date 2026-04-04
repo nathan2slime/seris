@@ -3,6 +3,7 @@
 use config::{Config, File, FileFormat};
 use serde::Deserialize;
 use std::env;
+use std::path::Path;
 use std::path::PathBuf;
 
 use crate::types::{Error, SerisError};
@@ -65,6 +66,20 @@ pub fn load_config() -> Result<AppConfig, Error> {
         reason: "could not be determined",
     })?;
     let required = env::var("SERIS_CONFIG_FILE").is_ok();
+
+    load_config_from_path_with_required(path, required)
+}
+
+/// Loads configuration from a specific file path.
+pub fn load_config_from_path(path: impl AsRef<Path>) -> Result<AppConfig, Error> {
+    load_config_from_path_with_required(path, true)
+}
+
+fn load_config_from_path_with_required(
+    path: impl AsRef<Path>,
+    required: bool,
+) -> Result<AppConfig, Error> {
+    let path = path.as_ref();
 
     let c = Config::builder()
         .add_source(File::new(path.to_string_lossy().as_ref(), FileFormat::Toml).required(required))
