@@ -1,6 +1,5 @@
-use crate::types::Data;
+use crate::types::{Data, Error};
 use poise::Command;
-use std::{error::Error, marker::Send};
 
 pub mod anime;
 pub mod clear;
@@ -8,7 +7,7 @@ pub mod manga;
 pub mod nasa;
 pub mod ping;
 
-pub fn commands() -> Vec<Command<Data, Box<dyn Error + Send + Sync + 'static>>> {
+pub fn commands() -> Vec<Command<Data, Error>> {
     vec![
         ping::ping(),
         clear::clear(),

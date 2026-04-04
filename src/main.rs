@@ -9,9 +9,9 @@ mod utils;
 use crate::cli::CliAction;
 use crate::commands::commands;
 use crate::config::load_config;
+use crate::types::{Data, Error};
 
 use serenity::all::{ClientBuilder, GatewayIntents};
-use types::Data;
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +28,14 @@ async fn main() {
         }
     }
 
-    let config = load_config();
+    if let Err(err) = run().await {
+        eprintln!("{err}");
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<(), Error> {
+    let config = load_config()?;
     let intents = GatewayIntents::non_privileged();
     let discord_token = config.discord_token.clone();
 
@@ -45,16 +52,19 @@ async fn main() {
         })
         .build();
 
-    let client = ClientBuilder::new(discord_token, intents)
+    let mut client = ClientBuilder::new(discord_token, intents)
         .event_handler(utils::Handler)
         .framework(framework)
-        .await;
+        .await?;
 
-    tokio::spawn(async move {
-        client.unwrap().start().await.unwrap();
-    });
+    tokio::select! {
+        result = client.start() => {
+            result?;
+        }
+        _ = tokio::signal::ctrl_c() => {
+            println!("received ctrl-c");
+        }
+    }
 
-    let _signal_err = tokio::signal::ctrl_c().await;
-
-    println!("received ctrl-c");
+    Ok(())
 }

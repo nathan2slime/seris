@@ -1,5 +1,7 @@
-use reqwest::{Client, Error};
+use reqwest::Client;
 use serde::Deserialize;
+
+use crate::types::Error;
 
 #[derive(Deserialize, Debug)]
 pub struct AstronomyPictureDay {
@@ -14,14 +16,7 @@ pub async fn get_astronomy_picture_day(api_key: String) -> Result<AstronomyPictu
     let url = "https://api.nasa.gov/planetary/apod";
     let params = [("api_key", api_key)];
 
-    let response = client.get(url).query(&params).send().await;
+    let response = client.get(url).query(&params).send().await?;
 
-    match response {
-        Ok(res) => {
-            let data = res.json::<AstronomyPictureDay>().await?;
-
-            Ok(data)
-        }
-        Err(err) => return Err(err),
-    }
+    Ok(response.json::<AstronomyPictureDay>().await?)
 }
