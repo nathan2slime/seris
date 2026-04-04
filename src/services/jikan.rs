@@ -1,5 +1,7 @@
-use reqwest::{Client, Error};
+use reqwest::Client;
 use serde::Deserialize;
+
+use crate::types::Error;
 
 #[derive(Deserialize, Debug)]
 pub struct Anime {
@@ -40,16 +42,9 @@ pub async fn get_random_anime() -> Result<Response<Anime>, Error> {
     let response = client
         .get(format!("{}/random/anime", get_api_url()))
         .send()
-        .await;
+        .await?;
 
-    match response {
-        Ok(res) => {
-            let data = res.json::<Response<Anime>>().await?;
-
-            Ok(data)
-        }
-        Err(err) => return Err(err),
-    }
+    Ok(response.json::<Response<Anime>>().await?)
 }
 
 pub async fn get_random_manga() -> Result<Response<Manga>, Error> {
@@ -58,14 +53,7 @@ pub async fn get_random_manga() -> Result<Response<Manga>, Error> {
     let response = client
         .get(format!("{}/random/manga", get_api_url()))
         .send()
-        .await;
+        .await?;
 
-    match response {
-        Ok(res) => {
-            let data = res.json::<Response<Manga>>().await?;
-
-            Ok(data)
-        }
-        Err(err) => return Err(err),
-    }
+    Ok(response.json::<Response<Manga>>().await?)
 }

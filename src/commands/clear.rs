@@ -12,10 +12,10 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
     let channel = ctx.channel_id();
     let author = ctx.author();
     let guild_id = ctx.guild_id();
-    if guild_id.is_some() {
+    if let Some(guild_id) = guild_id {
         let http = ctx.http();
 
-        let guild = http.get_guild(guild_id.unwrap()).await;
+        let guild = http.get_guild(guild_id).await;
 
         match guild {
             Ok(g) => {
@@ -31,7 +31,12 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
                         .into_iter()
                         .filter_map(|msgn| match msgn {
                             Ok(msg) => Some(msg.id),
-                            Err(_) => None,
+                            Err(err) => {
+                                log::error!(
+                                    "failed to fetch message for deletion in {guild_id}: {err}"
+                                );
+                                None
+                            }
                         })
                         .collect();
 
@@ -47,7 +52,11 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
                         .await?;
                 }
             }
-            Err(_) => {}
+            Err(err) => {
+                log::error!("failed to fetch guild {guild_id}: {err}");
+                ctx.say("Sinto muito. Não consegui confirmar as permissões do servidor")
+                    .await?;
+            }
         };
     } else {
         ctx.say("Sinto muito — isso só pode ser executado em um servidor")
