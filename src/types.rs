@@ -16,7 +16,7 @@ pub enum SerisError {
 
     /// Errors returned by Serenity.
     #[error(transparent)]
-    Serenity(#[from] ::serenity::Error),
+    Serenity(Box<::serenity::Error>),
 
     /// Configuration values that failed validation.
     #[error("invalid configuration for {field}: {reason}")]
@@ -38,3 +38,9 @@ pub struct Data {
 pub type Error = SerisError;
 /// Convenience alias for a Poise command context.
 pub type Context<'a> = poise::Context<'a, Data, Error>;
+
+impl From<::serenity::Error> for SerisError {
+    fn from(err: ::serenity::Error) -> Self {
+        Self::Serenity(Box::new(err))
+    }
+}
