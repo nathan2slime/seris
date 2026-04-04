@@ -2,6 +2,7 @@ use serenity::{all::CreateEmbed, model::colour};
 
 use crate::services::nasa::AstronomyPictureDay;
 
+/// Builds the APOD embed.
 pub fn apod(data: AstronomyPictureDay) -> CreateEmbed {
     CreateEmbed::new()
         .title(data.title)

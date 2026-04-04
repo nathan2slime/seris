@@ -6,6 +6,7 @@ use crate::types::{Context, Error};
 use crate::embeds;
 use crate::services::jikan;
 
+/// Replies with a random anime recommendation.
 #[poise::command(
     slash_command,
     rename = "get_random_anime",

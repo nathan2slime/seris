@@ -4,6 +4,7 @@ use serenity::{all::MessageId, futures::StreamExt};
 
 use crate::types::{Context, Error};
 
+/// Deletes recent messages in a guild channel for the owner.
 #[poise::command(
     slash_command,
     description_localized("pt-BR", "Limpa mensagens no canal")

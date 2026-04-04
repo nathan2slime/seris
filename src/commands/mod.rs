@@ -1,3 +1,5 @@
+//! Slash command registrations.
+
 use crate::types::{Data, Error};
 use poise::Command;
 
@@ -7,6 +9,7 @@ pub mod manga;
 pub mod nasa;
 pub mod ping;
 
+/// Returns every registered Discord slash command.
 pub fn commands() -> Vec<Command<Data, Error>> {
     vec![
         ping::ping(),

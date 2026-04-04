@@ -5,6 +5,7 @@ use crate::types::{Context, Error};
 use crate::embeds;
 use crate::services::nasa::get_astronomy_picture_day;
 
+/// Replies with NASA's astronomy picture of the day.
 #[poise::command(
     slash_command,
     description_localized("pt-BR", "Imagem Astronômica do Dia")

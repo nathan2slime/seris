@@ -1,3 +1,5 @@
+//! Configuration loading and validation.
+
 use config::{Config, File, FileFormat};
 use serde::Deserialize;
 use std::env;
@@ -5,13 +7,17 @@ use std::path::PathBuf;
 
 use crate::types::{Error, SerisError};
 
+/// Application settings loaded from the Seris config file.
 #[derive(Deserialize, Debug, Clone)]
 pub struct AppConfig {
+    /// Discord bot token used to authenticate the client.
     pub discord_token: String,
+    /// NASA API key used for APOD requests.
     pub nasa_api_key: String,
 }
 
 impl AppConfig {
+    /// Validates required configuration values.
     pub fn validate(&self) -> Result<(), Error> {
         if self.discord_token.trim().is_empty() {
             return Err(SerisError::InvalidConfig {
@@ -52,6 +58,7 @@ fn default_config_path() -> Option<PathBuf> {
     })
 }
 
+/// Loads and validates the application configuration.
 pub fn load_config() -> Result<AppConfig, Error> {
     let path = default_config_path().ok_or(SerisError::InvalidConfig {
         field: "config path",
