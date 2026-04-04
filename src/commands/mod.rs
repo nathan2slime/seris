@@ -19,3 +19,24 @@ pub fn commands() -> Vec<Command<Data, Error>> {
         manga::random(),
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::commands;
+
+    #[test]
+    fn registers_all_expected_commands() {
+        let names: Vec<_> = commands().into_iter().map(|command| command.name).collect();
+
+        assert_eq!(
+            names,
+            vec![
+                "ping",
+                "clear",
+                "apod",
+                "get_random_anime",
+                "get_random_manga"
+            ]
+        );
+    }
+}

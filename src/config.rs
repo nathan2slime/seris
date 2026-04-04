@@ -74,3 +74,28 @@ pub fn load_config() -> Result<AppConfig, Error> {
     config.validate()?;
     Ok(config)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::AppConfig;
+
+    #[test]
+    fn validate_accepts_non_empty_values() {
+        let config = AppConfig {
+            discord_token: "token".to_string(),
+            nasa_api_key: "key".to_string(),
+        };
+
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn validate_rejects_empty_discord_token() {
+        let config = AppConfig {
+            discord_token: String::new(),
+            nasa_api_key: "key".to_string(),
+        };
+
+        assert!(config.validate().is_err());
+    }
+}

@@ -3,6 +3,8 @@ mod commands;
 mod config;
 mod embeds;
 mod services;
+#[cfg(test)]
+mod test_utils;
 mod types;
 mod utils;
 
