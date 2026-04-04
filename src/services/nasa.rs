@@ -7,19 +7,8 @@ use crate::types::Error;
 
 const API_URL: &str = "https://api.nasa.gov/planetary/apod";
 
-/// NASA APOD response payload.
-#[derive(Deserialize, Debug)]
-pub struct AstronomyPictureDay {
-    /// APOD explanation text.
-    pub explanation: String,
-    /// High-resolution image URL.
-    pub hdurl: String,
-    /// APOD title.
-    pub title: String,
-}
-
-/// Fetches NASA's astronomy picture of the day.
-async fn get_astronomy_picture_day_from(
+/// Fetches NASA's astronomy picture of the day from a specific base URL.
+pub async fn get_astronomy_picture_day_from(
     base_url: &str,
     api_key: String,
 ) -> Result<AstronomyPictureDay, Error> {
@@ -30,6 +19,17 @@ async fn get_astronomy_picture_day_from(
     let response = client.get(base_url).query(&params).send().await?;
 
     Ok(response.json::<AstronomyPictureDay>().await?)
+}
+
+/// NASA APOD response payload.
+#[derive(Deserialize, Debug)]
+pub struct AstronomyPictureDay {
+    /// APOD explanation text.
+    pub explanation: String,
+    /// High-resolution image URL.
+    pub hdurl: String,
+    /// APOD title.
+    pub title: String,
 }
 
 /// Fetches NASA's astronomy picture of the day.

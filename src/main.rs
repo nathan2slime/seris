@@ -1,17 +1,7 @@
-mod cli;
-mod commands;
-mod config;
-mod embeds;
-mod services;
-#[cfg(test)]
-mod test_utils;
-mod types;
-mod utils;
-
-use crate::cli::CliAction;
-use crate::commands::commands;
-use crate::config::load_config;
-use crate::types::{Data, Error};
+use seris::cli::CliAction;
+use seris::commands::commands;
+use seris::config::load_config;
+use seris::types::{Data, Error};
 
 use serenity::all::{ClientBuilder, GatewayIntents};
 
@@ -19,7 +9,7 @@ use serenity::all::{ClientBuilder, GatewayIntents};
 async fn main() {
     env_logger::init();
 
-    match cli::dispatch() {
+    match seris::cli::dispatch() {
         Ok(CliAction::RunBot) => {}
         Ok(CliAction::Exit(code)) => {
             std::process::exit(code);
@@ -55,7 +45,7 @@ async fn run() -> Result<(), Error> {
         .build();
 
     let mut client = ClientBuilder::new(discord_token, intents)
-        .event_handler(utils::Handler)
+        .event_handler(seris::utils::Handler)
         .framework(framework)
         .await?;
 

@@ -21,7 +21,16 @@ pub enum CliAction {
 
 /// Parses CLI arguments and dispatches to the requested action.
 pub fn dispatch() -> Result<CliAction, String> {
-    let args: Vec<String> = env::args().skip(1).collect();
+    dispatch_from(env::args().skip(1))
+}
+
+/// Parses CLI arguments from an arbitrary iterator.
+pub fn dispatch_from<I, S>(args: I) -> Result<CliAction, String>
+where
+    I: IntoIterator<Item = S>,
+    S: Into<String>,
+{
+    let args: Vec<String> = args.into_iter().map(Into::into).collect();
     if args.is_empty() {
         return Ok(CliAction::RunBot);
     }

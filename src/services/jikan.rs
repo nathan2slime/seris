@@ -54,7 +54,8 @@ fn get_api_url() -> &'static str {
     API_URL
 }
 
-async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error> {
+/// Fetches a random anime from a specific Jikan base URL.
+pub async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error> {
     let client = Client::new();
 
     let response = client
@@ -65,7 +66,8 @@ async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error>
     Ok(response.json::<Response<Anime>>().await?)
 }
 
-async fn get_random_manga_from(base_url: &str) -> Result<Response<Manga>, Error> {
+/// Fetches a random manga from a specific Jikan base URL.
+pub async fn get_random_manga_from(base_url: &str) -> Result<Response<Manga>, Error> {
     let client = Client::new();
 
     let response = client
