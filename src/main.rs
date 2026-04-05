@@ -3,7 +3,8 @@ use seris::commands::commands;
 use seris::config::load_config;
 use seris::types::{Data, Error};
 
-use serenity::all::{ClientBuilder, GatewayIntents};
+use serenity::all::{ClientBuilder, GatewayIntents, ShardManager};
+use std::{sync::Arc, time::Duration};
 
 #[tokio::main]
 async fn main() {
@@ -12,16 +13,19 @@ async fn main() {
     match seris::cli::dispatch() {
         Ok(CliAction::RunBot) => {}
         Ok(CliAction::Exit(code)) => {
+            log::logger().flush();
             std::process::exit(code);
         }
         Err(message) => {
             log::error!("{message}");
+            log::logger().flush();
             std::process::exit(1);
         }
     }
 
     if let Err(err) = run().await {
         log::error!("{err}");
+        log::logger().flush();
         std::process::exit(1);
     }
 }
@@ -49,14 +53,26 @@ async fn run() -> Result<(), Error> {
         .framework(framework)
         .await?;
 
+    let shard_manager = client.shard_manager.clone();
+
     tokio::select! {
         result = client.start() => {
             result?;
         }
         _ = tokio::signal::ctrl_c() => {
             log::info!("received ctrl-c");
+            graceful_shutdown(shard_manager).await;
         }
     }
 
+    log::logger().flush();
+
     Ok(())
+}
+
+async fn graceful_shutdown(shard_manager: Arc<ShardManager>) {
+    match tokio::time::timeout(Duration::from_secs(5), shard_manager.shutdown_all()).await {
+        Ok(()) => log::info!("discord client shut down cleanly"),
+        Err(_) => log::warn!("timed out waiting for discord shutdown"),
+    }
 }

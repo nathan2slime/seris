@@ -17,7 +17,7 @@ reqwest = { version = "0.11", default-features = false, features = ["json", "rus
 serde = "1.0.216"
 serenity = "0.12.4"
 thiserror = "1.0"
-tokio = {version = "1.21.2", features = ["macros", "rt-multi-thread", "signal", "sync"]}
+tokio = {version = "1.21.2", features = ["macros", "rt-multi-thread", "signal", "sync", "time"]}
 
 [dev-dependencies]
 serde_json = "1.0"
