@@ -3,9 +3,11 @@
 use reqwest::Client;
 use serde::Deserialize;
 
+use super::http;
 use crate::types::Error;
 
 const API_URL: &str = "https://api.jikan.moe/v4";
+const SERVICE_NAME: &str = "jikan";
 
 /// Random anime payload returned by Jikan.
 #[derive(Deserialize, Debug)]
@@ -57,25 +59,17 @@ fn get_api_url() -> &'static str {
 /// Fetches a random anime from a specific Jikan base URL.
 pub async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error> {
     let client = Client::new();
+    let url = format!("{}/random/anime", base_url);
 
-    let response = client
-        .get(format!("{}/random/anime", base_url))
-        .send()
-        .await?;
-
-    Ok(response.json::<Response<Anime>>().await?)
+    http::get_json(SERVICE_NAME, move || client.get(url.clone())).await
 }
 
 /// Fetches a random manga from a specific Jikan base URL.
 pub async fn get_random_manga_from(base_url: &str) -> Result<Response<Manga>, Error> {
     let client = Client::new();
+    let url = format!("{}/random/manga", base_url);
 
-    let response = client
-        .get(format!("{}/random/manga", base_url))
-        .send()
-        .await?;
-
-    Ok(response.json::<Response<Manga>>().await?)
+    http::get_json(SERVICE_NAME, move || client.get(url.clone())).await
 }
 
 /// Fetches a random anime from Jikan.
