@@ -1,6 +1,7 @@
 //! Shared application state and error types.
 
 use crate::config::AppConfig;
+use reqwest::StatusCode;
 use thiserror::Error;
 
 /// Application-wide error type.
@@ -13,6 +14,29 @@ pub enum SerisError {
     /// Errors while performing HTTP requests.
     #[error(transparent)]
     Http(#[from] ::reqwest::Error),
+
+    /// HTTP request timed out.
+    #[error("request to {service} timed out")]
+    Timeout {
+        /// Service that timed out.
+        service: &'static str,
+    },
+
+    /// HTTP response returned a non-retryable status.
+    #[error("request to {service} failed with status {status}")]
+    HttpStatus {
+        /// Service that returned the status.
+        service: &'static str,
+        /// Returned HTTP status.
+        status: StatusCode,
+    },
+
+    /// Circuit breaker is open for this service.
+    #[error("service {service} is temporarily unavailable")]
+    CircuitOpen {
+        /// Service currently blocked by the circuit breaker.
+        service: &'static str,
+    },
 
     /// Errors returned by Serenity.
     #[error(transparent)]
