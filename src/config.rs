@@ -1,6 +1,6 @@
 //! Configuration loading and validation.
 
-use config::{Config, File, FileFormat};
+use config::{Config, Environment, File, FileFormat};
 use serde::Deserialize;
 use std::env;
 use std::path::Path;
@@ -83,6 +83,11 @@ fn load_config_from_path_with_required(
 
     let c = Config::builder()
         .add_source(File::new(path.to_string_lossy().as_ref(), FileFormat::Toml).required(required))
+        .add_source(
+            Environment::with_prefix("SERIS")
+                .prefix_separator("_")
+                .ignore_empty(true),
+        )
         .build()?;
 
     let config: AppConfig = c.try_deserialize()?;
@@ -92,7 +97,16 @@ fn load_config_from_path_with_required(
 
 #[cfg(test)]
 mod tests {
+    use super::load_config_from_path;
     use super::AppConfig;
+    use std::env;
+    use std::sync::{Mutex, OnceLock};
+    use tempfile::tempdir;
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
 
     #[test]
     fn validate_accepts_non_empty_values() {
@@ -112,5 +126,24 @@ mod tests {
         };
 
         assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn load_config_uses_env_fallbacks() {
+        let dir = tempdir().expect("temp dir");
+        let config_path = dir.path().join("config.toml");
+        std::fs::write(&config_path, "").expect("write empty config");
+
+        let _guard = env_lock().lock().expect("env lock");
+        env::set_var("SERIS_DISCORD_TOKEN", "env-token");
+        env::set_var("SERIS_NASA_API_KEY", "env-key");
+
+        let config = load_config_from_path(&config_path).expect("load config from env");
+
+        assert_eq!(config.discord_token, "env-token");
+        assert_eq!(config.nasa_api_key, "env-key");
+
+        env::remove_var("SERIS_DISCORD_TOKEN");
+        env::remove_var("SERIS_NASA_API_KEY");
     }
 }

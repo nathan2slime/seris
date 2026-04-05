@@ -69,7 +69,12 @@ nasa_api_key = "..."
 * `discord_token`: Discord bot token
 * `nasa_api_key`: Required for NASA commands
 
-Seris reads application settings from TOML only. `SERIS_CONFIG_FILE` is only used to override the config file path.
+Seris reads application settings from TOML, with environment fallbacks for secrets. `SERIS_CONFIG_FILE` still overrides the config file path.
+
+Environment variable fallbacks are also supported for secrets:
+
+* `SERIS_DISCORD_TOKEN`
+* `SERIS_NASA_API_KEY`
 
 ---
 

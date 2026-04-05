@@ -3,5 +3,6 @@ target/
 .env
 .env.development
 .env.production
+.env.local
 
 .idea
