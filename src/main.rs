@@ -1,35 +1,61 @@
-use seris::cli::CliAction;
+#[cfg(feature = "bot")]
 use seris::commands::commands;
+#[cfg(feature = "bot")]
 use seris::config::load_config;
+use std::{sync::Arc, time::Duration};
+
+#[cfg(feature = "bot")]
 use seris::types::{Data, Error};
 
+#[cfg(feature = "bot")]
 use serenity::all::{ClientBuilder, GatewayIntents, ShardManager};
-use std::{sync::Arc, time::Duration};
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
 
-    match seris::cli::dispatch() {
-        Ok(CliAction::RunBot) => {}
-        Ok(CliAction::Exit(code)) => {
-            log::logger().flush();
-            std::process::exit(code);
+    let run_bot = {
+        #[cfg(feature = "cli")]
+        {
+            match seris::cli::dispatch() {
+                Ok(seris::cli::CliAction::RunBot) => true,
+                Ok(seris::cli::CliAction::Exit(code)) => {
+                    log::logger().flush();
+                    std::process::exit(code);
+                }
+                Err(message) => {
+                    log::error!("{message}");
+                    log::logger().flush();
+                    std::process::exit(1);
+                }
+            }
         }
-        Err(message) => {
-            log::error!("{message}");
-            log::logger().flush();
-            std::process::exit(1);
-        }
-    }
 
-    if let Err(err) = run().await {
-        log::error!("{err}");
-        log::logger().flush();
-        std::process::exit(1);
+        #[cfg(not(feature = "cli"))]
+        {
+            true
+        }
+    };
+
+    if run_bot {
+        #[cfg(feature = "bot")]
+        {
+            if let Err(err) = run().await {
+                log::error!("{err}");
+                log::logger().flush();
+                std::process::exit(1);
+            }
+        }
+
+        #[cfg(not(feature = "bot"))]
+        {
+            log::warn!("bot feature is disabled");
+            log::logger().flush();
+        }
     }
 }
 
+#[cfg(feature = "bot")]
 async fn run() -> Result<(), Error> {
     let config = load_config()?;
     let intents = GatewayIntents::non_privileged();
@@ -70,6 +96,7 @@ async fn run() -> Result<(), Error> {
     Ok(())
 }
 
+#[cfg(feature = "bot")]
 async fn graceful_shutdown(shard_manager: Arc<ShardManager>) {
     match tokio::time::timeout(Duration::from_secs(5), shard_manager.shutdown_all()).await {
         Ok(()) => log::info!("discord client shut down cleanly"),
