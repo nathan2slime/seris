@@ -2,6 +2,7 @@
 
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -41,6 +42,7 @@ where
             Ok(CliAction::Exit(0))
         }
         "version" | "--version" | "-V" => {
+            log::info!("reporting binary version");
             println!("{} {}", APP_NAME, env!("CARGO_PKG_VERSION"));
             Ok(CliAction::Exit(0))
         }
@@ -62,8 +64,10 @@ fn handle_config(args: &[String]) -> Result<CliAction, String> {
             Ok(CliAction::Exit(0))
         }
         "edit" => {
-            let editor = env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
-            run_sudoedit(config_path(), editor)?;
+            let editor = sanitize_editor(env::var("EDITOR").unwrap_or_else(|_| "vi".to_string()))?;
+            let path = normalize_edit_path(config_path())?;
+            log::info!("editing config at {}", path.display());
+            run_sudoedit(path, editor)?;
             Ok(CliAction::Exit(0))
         }
         _ => Err(format!(
@@ -80,11 +84,13 @@ fn handle_service(args: &[String]) -> Result<CliAction, String> {
 
     match command {
         "start" | "stop" | "restart" | "status" => {
+            log::info!("requesting service {command}");
             run_systemctl(command)?;
             Ok(CliAction::Exit(0))
         }
         "logs" => {
             let follow = args.iter().any(|arg| arg == "--follow" || arg == "-f");
+            log::info!("requesting service logs (follow={follow})");
             run_journalctl_logs(follow)?;
             Ok(CliAction::Exit(0))
         }
@@ -99,7 +105,10 @@ fn handle_self_update(args: &[String]) -> Result<CliAction, String> {
     let version = args
         .first()
         .cloned()
+        .map(|version| sanitize_release_tag(&version))
+        .transpose()?
         .unwrap_or_else(|| "latest".to_string());
+    log::info!("requesting self-update to {version}");
     let install_url = if version == "latest" {
         format!("https://github.com/{REPO_OWNER}/{REPO_NAME}/releases/latest/download/install.sh")
     } else {
@@ -195,6 +204,55 @@ fn run_sudoedit(path: PathBuf, editor: String) -> Result<(), String> {
     )
 }
 
+fn sanitize_editor(editor: String) -> Result<String, String> {
+    let editor = editor.trim().to_string();
+
+    if editor.is_empty() {
+        return Err("EDITOR must not be empty".to_string());
+    }
+
+    if editor
+        .chars()
+        .any(|ch| ch.is_control() || ch.is_whitespace())
+    {
+        return Err("EDITOR must be a single executable path or name".to_string());
+    }
+
+    Ok(editor)
+}
+
+fn normalize_edit_path(path: PathBuf) -> Result<PathBuf, String> {
+    if path.is_absolute() {
+        return Ok(path);
+    }
+
+    if Path::new(&path).exists() {
+        return path
+            .canonicalize()
+            .map_err(|err| format!("failed to resolve config path: {err}"));
+    }
+
+    Err(format!(
+        "config path must be absolute when editing: {}",
+        path.display()
+    ))
+}
+
+fn sanitize_release_tag(version: &str) -> Result<String, String> {
+    if version.is_empty() {
+        return Err("release tag must not be empty".to_string());
+    }
+
+    if version
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-' | 'v'))
+    {
+        Ok(version.to_string())
+    } else {
+        Err("release tag contains invalid characters".to_string())
+    }
+}
+
 fn run_command(
     program: &str,
     args: Vec<String>,
@@ -244,4 +302,33 @@ fn print_help() {
 
 fn usage() -> &'static str {
     "seris <command>\n\nCommands:\n  version\n  config path\n  config edit\n  service start\n  service stop\n  service restart\n  service status\n  service logs [--follow]\n  self-update [tag]\n\nWithout a command, Seris starts the bot normally."
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_edit_path, sanitize_editor, sanitize_release_tag};
+    use tempfile::tempdir;
+
+    #[test]
+    fn accepts_simple_release_tag() {
+        assert_eq!(sanitize_release_tag("v1.2.3").unwrap(), "v1.2.3");
+    }
+
+    #[test]
+    fn rejects_invalid_release_tag() {
+        assert!(sanitize_release_tag("v1.2.3;rm -rf /").is_err());
+    }
+
+    #[test]
+    fn rejects_editor_with_whitespace() {
+        assert!(sanitize_editor("vim -u NONE".to_string()).is_err());
+    }
+
+    #[test]
+    fn normalizes_absolute_edit_path() {
+        let dir = tempdir().expect("temp dir");
+        let path = dir.path().join("config.toml");
+
+        assert_eq!(normalize_edit_path(path.clone()).unwrap(), path);
+    }
 }
