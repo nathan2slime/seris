@@ -71,6 +71,11 @@ nasa_api_key = "..."
 
 Seris reads application settings from TOML, with environment fallbacks for secrets. `SERIS_CONFIG_FILE` still overrides the config file path.
 
+Build flags:
+
+* `bot` - Discord bot functionality
+* `cli` - admin CLI tools
+
 Environment variable fallbacks are also supported for secrets:
 
 * `SERIS_DISCORD_TOKEN`

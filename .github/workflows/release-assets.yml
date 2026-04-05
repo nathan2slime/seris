@@ -93,12 +93,25 @@ jobs:
           sha256sum "dist/${ASSET_PREFIX}.tar.gz" > "dist/${ASSET_PREFIX}.tar.gz.sha256"
           sha256sum dist/install.sh > dist/install.sh.sha256
 
+      - name: Generate release changelog
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -eux
+          PREVIOUS_TAG="$(git tag --sort=-creatordate | grep -Fxv "$VERSION" | head -n 1 || true)"
+          if [ -n "$PREVIOUS_TAG" ]; then
+            git log --no-merges --pretty=format:'- %s (%h)' "${PREVIOUS_TAG}..${VERSION}" > dist/CHANGELOG.md
+          else
+            git log --no-merges --pretty=format:'- %s (%h)' --max-count=20 "$VERSION" > dist/CHANGELOG.md
+          fi
+
       - name: Upload assets to release
         env:
           VERSION: ${{ github.event.release.tag_name }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/CHANGELOG.md
             dist/install.sh
             dist/install.sh.sha256
             dist/${{ env.APP_NAME }}-${{ env.VERSION }}-${{ env.TARGET }}

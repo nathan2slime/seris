@@ -3,8 +3,10 @@ edition = "2021"
 name = "seris"
 version = "0.1.0"
 
-[workspace]
-members = ["."]
+[features]
+default = ["bot", "cli"]
+bot = []
+cli = []
 
 [dependencies]
 chrono = "0.4.39"
