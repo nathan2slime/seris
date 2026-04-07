@@ -47,3 +47,4 @@ Required values:
 * Monitor `/ready` rather than just process liveness.
 * Use an interactive terminal if you want the dashboard UI.
 * Persisted command stats are stored in the SQLite file, defaulting to `~/.local/share/seris/seris.sqlite3`.
+* SQLite connections are pooled internally to reduce contention under load.
