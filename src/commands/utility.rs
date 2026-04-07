@@ -44,10 +44,6 @@ pub async fn uptime(ctx: Context<'_>) -> Result<(), Error> {
     description_localized("pt-BR", "Mostra estatísticas persistidas")
 )]
 pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.data()
-        .database
-        .record_command_usage_best_effort(ctx.author().id, "stats");
-
     let summary = match ctx.data().database.command_usage_summary(ctx.author().id) {
         Ok(summary) => summary,
         Err(err) => {
@@ -57,6 +53,10 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
             return Ok(());
         }
     };
+
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "stats");
 
     let message = if let Some(favorite_command) = summary.favorite_command {
         format!(
