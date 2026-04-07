@@ -41,6 +41,10 @@ All commands are **slash commands** (`/`).
 4. **Random Anime**
    `/anime random` — Suggests an anime title.
 
+5. **Utility Commands**
+   `/about` — Shows bot metadata.
+   `/uptime` — Shows process uptime.
+
 ---
 
 ## ⚙️ Requirements
