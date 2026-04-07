@@ -251,8 +251,8 @@ This roadmap outlines planned improvements for the Seris Discord bot, prioritize
 ### 5.2 Performance Optimization
 **Goal:** Reduce resource usage
 
-- [ ] Profile memory usage
-- [ ] Optimize API call patterns
+- [x] Profile memory usage
+- [x] Optimize API call patterns
 - [x] Consider connection pooling
 - [x] Benchmark critical paths
 

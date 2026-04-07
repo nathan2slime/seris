@@ -23,9 +23,10 @@ flowchart LR
 * `src/utils.rs` maps Serenity events into readiness state.
 * `src/plugins.rs` groups slash commands into internal plugins.
 * `src/database.rs` stores persistent command usage in SQLite using a small connection pool.
+* `src/benchmarks.rs` provides timing and memory sampling helpers for hot paths.
 * `src/dashboard.rs` renders the terminal dashboard.
 * `src/commands/` contains the slash command entry points.
-* `src/services/` handles external API calls and retry/circuit behavior.
+* `src/services/` handles external API calls, retry/circuit behavior, and static URL caching for hot paths.
 * `src/embeds/` turns service payloads into Discord messages.
 
 ## Request flow
