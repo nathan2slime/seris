@@ -11,6 +11,10 @@ use crate::services::nasa::get_astronomy_picture_day;
     description_localized("pt-BR", "Imagem Astronômica do Dia")
 )]
 pub async fn apod(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "apod");
+
     let nasa_api_key = ctx.data().config.nasa_api_key.clone();
     let res = get_astronomy_picture_day(nasa_api_key).await;
 

@@ -6,6 +6,7 @@ Seris follows a small, layered flow:
 flowchart LR
   Discord[Discord Gateway] --> Handler[Serenity handler]
   Handler --> Commands[Slash commands]
+  Commands --> Database[SQLite persistence]
   Commands --> Embeds[Embed builders]
   Commands --> Services[Service clients]
   Services --> Jikan[Jikan API]
@@ -19,6 +20,7 @@ flowchart LR
 
 * `src/main.rs` boots the bot, TUI dashboard, and health server.
 * `src/utils.rs` maps Serenity events into readiness state.
+* `src/database.rs` stores persistent command usage in SQLite.
 * `src/dashboard.rs` renders the terminal dashboard.
 * `src/commands/` contains the slash command entry points.
 * `src/services/` handles external API calls and retry/circuit behavior.
@@ -28,6 +30,7 @@ flowchart LR
 
 1. Discord dispatches an interaction.
 2. Serenity hands it to the event handler or slash command.
-3. Commands call a service client when data is needed.
-4. The service client fetches or caches the payload.
-5. An embed builder formats the response for Discord.
+3. Commands record usage in SQLite when appropriate.
+4. Commands call a service client when data is needed.
+5. The service client fetches or caches the payload.
+6. An embed builder formats the response for Discord.

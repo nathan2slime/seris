@@ -38,6 +38,7 @@ Required values:
 * `SERIS_DISCORD_TOKEN` or `discord_token` in the config file
 * `SERIS_NASA_API_KEY` or `nasa_api_key` in the config file
 * optional `SERIS_CONFIG_FILE` to override the config path
+* optional `SERIS_DB_FILE` to override the SQLite database path
 
 ## Recommendations
 
@@ -45,3 +46,4 @@ Required values:
 * Keep the config file out of the image when using external secrets.
 * Monitor `/ready` rather than just process liveness.
 * Use an interactive terminal if you want the dashboard UI.
+* Persisted command stats are stored in the SQLite file, defaulting to `~/.local/share/seris/seris.sqlite3`.
