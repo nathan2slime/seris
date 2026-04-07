@@ -77,7 +77,7 @@ impl Database {
         user_id: UserId,
         command: &'static str,
     ) -> Result<(), Error> {
-        let user_id = user_id.get().to_string();
+        let user_id = user_id.get();
         let now = Utc::now().timestamp();
         let connection = self.connection.lock().expect("database mutex");
 
@@ -89,7 +89,7 @@ impl Database {
                 count = count + 1,
                 last_used = excluded.last_used
             "#,
-            params![user_id, command, now],
+            params![user_id.to_string(), command, now],
         )?;
 
         Ok(())
@@ -104,7 +104,7 @@ impl Database {
 
     /// Returns a summary of a user's persisted command usage.
     pub fn command_usage_summary(&self, user_id: UserId) -> Result<CommandUsageSummary, Error> {
-        let user_id = user_id.get().to_string();
+        let user_id = user_id.get();
         let connection = self.connection.lock().expect("database mutex");
 
         let (total_uses, distinct_commands) = connection.query_row(
@@ -113,7 +113,7 @@ impl Database {
             FROM command_usage
             WHERE user_id = ?1
             "#,
-            params![user_id.clone()],
+            params![user_id.to_string()],
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         )?;
 
@@ -126,7 +126,7 @@ impl Database {
                 ORDER BY count DESC, last_used DESC, command ASC
                 LIMIT 1
                 "#,
-                params![user_id],
+                params![user_id.to_string()],
                 |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
             )
             .optional()?;
