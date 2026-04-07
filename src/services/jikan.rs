@@ -1,6 +1,5 @@
 //! Jikan API helpers and response models.
 
-use reqwest::Client;
 use serde::Deserialize;
 
 use super::http;
@@ -58,18 +57,16 @@ fn get_api_url() -> &'static str {
 
 /// Fetches a random anime from a specific Jikan base URL.
 pub async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error> {
-    let client = Client::new();
     let url = format!("{}/random/anime", base_url);
 
-    http::get_json(SERVICE_NAME, move || client.get(url.clone())).await
+    http::get_json(SERVICE_NAME, move || http::client().get(url.clone())).await
 }
 
 /// Fetches a random manga from a specific Jikan base URL.
 pub async fn get_random_manga_from(base_url: &str) -> Result<Response<Manga>, Error> {
-    let client = Client::new();
     let url = format!("{}/random/manga", base_url);
 
-    http::get_json(SERVICE_NAME, move || client.get(url.clone())).await
+    http::get_json(SERVICE_NAME, move || http::client().get(url.clone())).await
 }
 
 /// Fetches a random anime from Jikan.

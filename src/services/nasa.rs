@@ -1,7 +1,6 @@
 //! NASA API helpers and response models.
 
 use chrono::Utc;
-use reqwest::Client;
 use serde::Deserialize;
 use std::sync::{Mutex, OnceLock};
 
@@ -27,12 +26,11 @@ pub async fn get_astronomy_picture_day_from(
     base_url: &str,
     api_key: String,
 ) -> Result<AstronomyPictureDay, Error> {
-    let client = Client::new();
     let url = base_url.to_string();
     let key = api_key;
 
     http::get_json(SERVICE_NAME, move || {
-        client.get(&url).query(&[("api_key", key.clone())])
+        http::client().get(&url).query(&[("api_key", key.clone())])
     })
     .await
 }
