@@ -7,7 +7,7 @@ flowchart LR
   Discord[Discord Gateway] --> Handler[Serenity handler]
   Handler --> Plugins[Plugin registry]
   Plugins --> Commands[Slash commands]
-  Commands --> Database[SQLite persistence]
+  Commands --> Database[SQLite persistence pool]
   Commands --> Embeds[Embed builders]
   Commands --> Services[Service clients]
   Services --> Jikan[Jikan API]
@@ -22,7 +22,7 @@ flowchart LR
 * `src/main.rs` boots the bot, TUI dashboard, and health server.
 * `src/utils.rs` maps Serenity events into readiness state.
 * `src/plugins.rs` groups slash commands into internal plugins.
-* `src/database.rs` stores persistent command usage in SQLite.
+* `src/database.rs` stores persistent command usage in SQLite using a small connection pool.
 * `src/dashboard.rs` renders the terminal dashboard.
 * `src/commands/` contains the slash command entry points.
 * `src/services/` handles external API calls and retry/circuit behavior.

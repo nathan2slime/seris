@@ -1,13 +1,13 @@
-//! SQLite-backed persistence for lightweight bot state.
+//! SQLite-backed persistence for lightweight bot state with a small connection pool.
 
 use std::{
     env, fs,
     path::{Path, PathBuf},
-    sync::Mutex,
     time::Duration,
 };
 
 use chrono::Utc;
+use r2d2::{ManageConnection, Pool, PooledConnection};
 use rusqlite::{params, Connection, OptionalExtension};
 use serenity::all::UserId;
 
@@ -28,7 +28,51 @@ pub struct CommandUsageSummary {
 
 /// SQLite-backed persistence layer.
 pub struct Database {
-    connection: Mutex<Connection>,
+    pool: Pool<SqliteConnectionManager>,
+}
+
+#[derive(Clone)]
+struct SqliteConnectionManager {
+    path: PathBuf,
+}
+
+impl SqliteConnectionManager {
+    fn new(path: PathBuf) -> Self {
+        Self { path }
+    }
+}
+
+impl ManageConnection for SqliteConnectionManager {
+    type Connection = Connection;
+    type Error = rusqlite::Error;
+
+    fn connect(&self) -> Result<Self::Connection, Self::Error> {
+        let connection = Connection::open(&self.path)?;
+        connection.busy_timeout(Duration::from_secs(2))?;
+        connection.execute_batch(
+            r#"
+            PRAGMA foreign_keys = ON;
+            CREATE TABLE IF NOT EXISTS command_usage (
+                user_id TEXT NOT NULL,
+                command TEXT NOT NULL,
+                count INTEGER NOT NULL DEFAULT 1,
+                last_used INTEGER NOT NULL,
+                PRIMARY KEY (user_id, command)
+            );
+            "#,
+        )?;
+
+        Ok(connection)
+    }
+
+    fn is_valid(&self, conn: &mut Self::Connection) -> Result<(), Self::Error> {
+        conn.query_row("SELECT 1", [], |_| Ok(()))?;
+        Ok(())
+    }
+
+    fn has_broken(&self, _conn: &mut Self::Connection) -> bool {
+        false
+    }
 }
 
 impl Database {
@@ -51,24 +95,14 @@ impl Database {
             }
         }
 
-        let connection = Connection::open(path)?;
-        connection.busy_timeout(Duration::from_secs(2))?;
-        connection.execute_batch(
-            r#"
-            PRAGMA foreign_keys = ON;
-            CREATE TABLE IF NOT EXISTS command_usage (
-                user_id TEXT NOT NULL,
-                command TEXT NOT NULL,
-                count INTEGER NOT NULL DEFAULT 1,
-                last_used INTEGER NOT NULL,
-                PRIMARY KEY (user_id, command)
-            );
-            "#,
-        )?;
+        let manager = SqliteConnectionManager::new(path.to_path_buf());
+        let pool = Pool::builder().max_size(4).build(manager)?;
 
-        Ok(Self {
-            connection: Mutex::new(connection),
-        })
+        Ok(Self { pool })
+    }
+
+    fn connection(&self) -> Result<PooledConnection<SqliteConnectionManager>, Error> {
+        Ok(self.pool.get()?)
     }
 
     /// Records that a user used a command.
@@ -77,9 +111,9 @@ impl Database {
         user_id: UserId,
         command: &'static str,
     ) -> Result<(), Error> {
-        let user_id = user_id.get();
+        let user_id = user_id.get().to_string();
         let now = Utc::now().timestamp();
-        let connection = self.connection.lock().expect("database mutex");
+        let connection = self.connection()?;
 
         connection.execute(
             r#"
@@ -89,7 +123,7 @@ impl Database {
                 count = count + 1,
                 last_used = excluded.last_used
             "#,
-            params![user_id.to_string(), command, now],
+            params![&user_id, command, now],
         )?;
 
         Ok(())
@@ -104,8 +138,8 @@ impl Database {
 
     /// Returns a summary of a user's persisted command usage.
     pub fn command_usage_summary(&self, user_id: UserId) -> Result<CommandUsageSummary, Error> {
-        let user_id = user_id.get();
-        let connection = self.connection.lock().expect("database mutex");
+        let user_id = user_id.get().to_string();
+        let connection = self.connection()?;
 
         let (total_uses, distinct_commands) = connection.query_row(
             r#"
@@ -113,7 +147,7 @@ impl Database {
             FROM command_usage
             WHERE user_id = ?1
             "#,
-            params![user_id.to_string()],
+            params![&user_id],
             |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         )?;
 
@@ -126,7 +160,7 @@ impl Database {
                 ORDER BY count DESC, last_used DESC, command ASC
                 LIMIT 1
                 "#,
-                params![user_id.to_string()],
+                params![&user_id],
                 |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
             )
             .optional()?;

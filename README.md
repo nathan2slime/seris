@@ -20,7 +20,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Clean permission boundaries
 * Predictable behavior
 * Plugin-based command registry
-* SQLite-backed persistence
+* SQLite-backed persistence with a connection pool
 * Benchmark helpers for critical paths
 * Minimal Docker footprint
 * Fast startup, low memory usage
@@ -124,7 +124,7 @@ flowchart LR
   HealthHTTP --> Docker[Docker healthcheck]
 ```
 
-The bot keeps the command layer thin: commands call services, services fetch API data, and embeds format the response for Discord.
+The bot keeps the command layer thin: commands call services, services fetch API data, and embeds format the response for Discord. SQLite uses a small connection pool so reads and writes do not serialize on a single handle.
 
 See also:
 

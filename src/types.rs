@@ -21,6 +21,10 @@ pub enum SerisError {
     #[error(transparent)]
     Sqlite(#[from] ::rusqlite::Error),
 
+    /// Errors from the SQLite connection pool.
+    #[error(transparent)]
+    Pool(#[from] ::r2d2::Error),
+
     /// I/O errors from local runtime services.
     #[error(transparent)]
     Io(#[from] ::std::io::Error),
