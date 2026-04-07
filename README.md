@@ -212,6 +212,15 @@ Optional version override:
 curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh -s -- <tag>
 ```
 
+To use the installed CLI from Bash, add the install directory to your `PATH`:
+
+```bash
+echo 'export PATH="$PATH:/opt/seris"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+This exposes the `seris` binary at `/opt/seris/seris`.
+
 ### Local bundle installers
 
 If you prefer extracting a release bundle manually, run the bundled local installer instead:
