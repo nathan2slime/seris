@@ -2,6 +2,7 @@
 
 use crate::config::AppConfig;
 use reqwest::StatusCode;
+use std::sync::Arc;
 use std::time::Instant;
 use thiserror::Error;
 
@@ -15,6 +16,10 @@ pub enum SerisError {
     /// Errors while performing HTTP requests.
     #[error(transparent)]
     Http(#[from] ::reqwest::Error),
+
+    /// Errors while interacting with SQLite persistence.
+    #[error(transparent)]
+    Sqlite(#[from] ::rusqlite::Error),
 
     /// I/O errors from local runtime services.
     #[error(transparent)]
@@ -61,6 +66,8 @@ pub enum SerisError {
 pub struct Data {
     /// Loaded application configuration.
     pub config: AppConfig,
+    /// SQLite-backed persistence.
+    pub database: Arc<crate::database::Database>,
     /// When the process started.
     pub started_at: Instant,
 }

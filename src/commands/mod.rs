@@ -20,6 +20,7 @@ pub fn commands() -> Vec<Command<Data, Error>> {
         manga::random(),
         utility::about(),
         utility::uptime(),
+        utility::stats(),
     ]
 }
 
@@ -40,7 +41,8 @@ mod tests {
                 "get_random_anime",
                 "get_random_manga",
                 "about",
-                "uptime"
+                "uptime",
+                "stats"
             ]
         );
     }

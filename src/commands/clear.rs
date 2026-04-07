@@ -10,6 +10,10 @@ use crate::types::{Context, Error};
     description_localized("pt-BR", "Limpa mensagens no canal")
 )]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "clear");
+
     let channel = ctx.channel_id();
     let author = ctx.author();
     let guild_id = ctx.guild_id();
