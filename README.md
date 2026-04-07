@@ -81,6 +81,12 @@ Environment variable fallbacks are also supported for secrets:
 * `SERIS_DISCORD_TOKEN`
 * `SERIS_NASA_API_KEY`
 
+Monitoring:
+
+* `GET /health` on port `8080` returns `200` when the process is up.
+* `GET /ready` returns `200` after Discord is connected and `503` otherwise.
+* The Docker image includes a `HEALTHCHECK` against `/ready`.
+
 ---
 
 ## 🧱 Architecture

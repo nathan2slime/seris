@@ -15,6 +15,10 @@ pub enum SerisError {
     #[error(transparent)]
     Http(#[from] ::reqwest::Error),
 
+    /// I/O errors from local runtime services.
+    #[error(transparent)]
+    Io(#[from] ::std::io::Error),
+
     /// HTTP request timed out.
     #[error("request to {service} timed out")]
     Timeout {
