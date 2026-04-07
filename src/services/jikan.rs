@@ -1,12 +1,26 @@
 //! Jikan API helpers and response models.
 
+use std::sync::OnceLock;
+
+use reqwest::Url;
 use serde::Deserialize;
 
 use super::http;
 use crate::types::Error;
 
-const API_URL: &str = "https://api.jikan.moe/v4";
 const SERVICE_NAME: &str = "jikan";
+const RANDOM_ANIME_URL: &str = "https://api.jikan.moe/v4/random/anime";
+const RANDOM_MANGA_URL: &str = "https://api.jikan.moe/v4/random/manga";
+
+fn random_anime_url() -> &'static Url {
+    static URL: OnceLock<Url> = OnceLock::new();
+    URL.get_or_init(|| Url::parse(RANDOM_ANIME_URL).expect("valid Jikan anime url"))
+}
+
+fn random_manga_url() -> &'static Url {
+    static URL: OnceLock<Url> = OnceLock::new();
+    URL.get_or_init(|| Url::parse(RANDOM_MANGA_URL).expect("valid Jikan manga url"))
+}
 
 /// Random anime payload returned by Jikan.
 #[derive(Deserialize, Debug)]
@@ -51,10 +65,6 @@ pub struct Response<D> {
     pub data: D,
 }
 
-fn get_api_url() -> &'static str {
-    API_URL
-}
-
 /// Fetches a random anime from a specific Jikan base URL.
 pub async fn get_random_anime_from(base_url: &str) -> Result<Response<Anime>, Error> {
     let url = format!("{}/random/anime", base_url);
@@ -71,12 +81,18 @@ pub async fn get_random_manga_from(base_url: &str) -> Result<Response<Manga>, Er
 
 /// Fetches a random anime from Jikan.
 pub async fn get_random_anime() -> Result<Response<Anime>, Error> {
-    get_random_anime_from(get_api_url()).await
+    http::get_json(SERVICE_NAME, || {
+        http::client().get(random_anime_url().clone())
+    })
+    .await
 }
 
 /// Fetches a random manga from Jikan.
 pub async fn get_random_manga() -> Result<Response<Manga>, Error> {
-    get_random_manga_from(get_api_url()).await
+    http::get_json(SERVICE_NAME, || {
+        http::client().get(random_manga_url().clone())
+    })
+    .await
 }
 
 #[cfg(test)]

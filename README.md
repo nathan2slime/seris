@@ -51,7 +51,7 @@ All commands are **slash commands** (`/`).
 
 ## ⚡ Benchmarking
 
-Lightweight benchmark-style checks live as ignored tests.
+Lightweight benchmark-style checks live as ignored tests, including memory sampling.
 
 Run them with:
 
