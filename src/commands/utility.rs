@@ -1,6 +1,12 @@
 use std::time::Duration;
 
-use crate::types::{Context, Error};
+use crate::{
+    cooldown,
+    types::{Context, Error},
+};
+
+const ABOUT_COOLDOWN: Duration = Duration::from_secs(10);
+const UPTIME_COOLDOWN: Duration = Duration::from_secs(10);
 
 /// Shares runtime metadata for the bot.
 #[poise::command(
@@ -8,6 +14,10 @@ use crate::types::{Context, Error};
     description_localized("pt-BR", "Mostra informações do bot")
 )]
 pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
+    if !cooldown::enforce(&ctx, "about", ABOUT_COOLDOWN).await? {
+        return Ok(());
+    }
+
     let version = env!("CARGO_PKG_VERSION");
     let message =
         format!("Seris v{version}\nSlash commands: ping, clear, apod, anime, manga, about, uptime");
@@ -22,6 +32,10 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     description_localized("pt-BR", "Mostra há quanto tempo o bot está ligado")
 )]
 pub async fn uptime(ctx: Context<'_>) -> Result<(), Error> {
+    if !cooldown::enforce(&ctx, "uptime", UPTIME_COOLDOWN).await? {
+        return Ok(());
+    }
+
     let uptime = ctx.data().started_at.elapsed();
     let message = format!("Seris está ativa há {}", format_duration(uptime));
 

@@ -5,6 +5,8 @@ pub mod commands;
 #[cfg(feature = "bot")]
 pub mod config;
 #[cfg(feature = "bot")]
+pub mod cooldown;
+#[cfg(feature = "bot")]
 pub mod dashboard;
 #[cfg(feature = "bot")]
 pub mod embeds;

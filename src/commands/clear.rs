@@ -1,8 +1,15 @@
+use std::time::Duration;
+
 use chrono::prelude::Utc;
 
 use serenity::{all::MessageId, futures::StreamExt};
 
-use crate::types::{Context, Error};
+use crate::{
+    cooldown,
+    types::{Context, Error},
+};
+
+const CLEAR_COOLDOWN: Duration = Duration::from_secs(30);
 
 /// Deletes recent messages in a guild channel for the owner.
 #[poise::command(
@@ -10,6 +17,10 @@ use crate::types::{Context, Error};
     description_localized("pt-BR", "Limpa mensagens no canal")
 )]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
+    if !cooldown::enforce(&ctx, "clear", CLEAR_COOLDOWN).await? {
+        return Ok(());
+    }
+
     let channel = ctx.channel_id();
     let author = ctx.author();
     let guild_id = ctx.guild_id();
