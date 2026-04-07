@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use reqwest::{RequestBuilder, StatusCode};
+use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::de::DeserializeOwned;
 use tokio::time::{sleep, timeout};
 
@@ -41,6 +41,15 @@ struct CircuitState {
 fn circuits() -> &'static Mutex<HashMap<&'static str, CircuitState>> {
     static CIRCUITS: OnceLock<Mutex<HashMap<&'static str, CircuitState>>> = OnceLock::new();
     CIRCUITS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn http_client() -> &'static Client {
+    static CLIENT: OnceLock<Client> = OnceLock::new();
+    CLIENT.get_or_init(Client::new)
+}
+
+pub(crate) fn client() -> &'static Client {
+    http_client()
 }
 
 pub(crate) async fn get_json<T, F>(service: &'static str, build_request: F) -> Result<T, Error>
@@ -159,7 +168,7 @@ fn record_failure(service: &'static str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{fetch_json_with_policy, RequestPolicy};
+    use super::{client, fetch_json_with_policy, RequestPolicy};
     use crate::test_utils::{spawn_scripted_server, TestResponse};
     use serde::Deserialize;
     use std::time::Duration;
@@ -259,5 +268,10 @@ mod tests {
         .expect_err("circuit open");
 
         assert!(error.to_string().contains("temporarily unavailable"));
+    }
+
+    #[test]
+    fn shares_the_same_http_client() {
+        assert!(std::ptr::eq(client(), client()));
     }
 }
