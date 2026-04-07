@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh *)",
+      "Bash(git remote *)",
+      "WebFetch(github.com)"
+    ]
+  },
+  "$version": 3
+}
