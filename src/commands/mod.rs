@@ -34,7 +34,8 @@ mod tests {
                 "get_random_anime",
                 "get_random_manga",
                 "about",
-                "uptime"
+                "uptime",
+                "stats"
             ]
         );
     }

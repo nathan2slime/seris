@@ -8,9 +8,14 @@ use crate::types::{Context, Error};
     description_localized("pt-BR", "Mostra informações do bot")
 )]
 pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "about");
+
     let version = env!("CARGO_PKG_VERSION");
-    let message =
-        format!("Seris v{version}\nSlash commands: ping, clear, apod, anime, manga, about, uptime");
+    let message = format!(
+        "Seris v{version}\nSlash commands: ping, clear, apod, anime, manga, about, uptime, stats"
+    );
 
     ctx.say(message).await?;
     Ok(())
@@ -22,8 +27,48 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     description_localized("pt-BR", "Mostra há quanto tempo o bot está ligado")
 )]
 pub async fn uptime(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "uptime");
+
     let uptime = ctx.data().started_at.elapsed();
     let message = format!("Seris está ativa há {}", format_duration(uptime));
+
+    ctx.say(message).await?;
+    Ok(())
+}
+
+/// Shows persisted command usage statistics.
+#[poise::command(
+    slash_command,
+    description_localized("pt-BR", "Mostra estatísticas persistidas")
+)]
+pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "stats");
+
+    let summary = match ctx.data().database.command_usage_summary(ctx.author().id) {
+        Ok(summary) => summary,
+        Err(err) => {
+            log::error!("failed to load persisted stats: {err}");
+            ctx.say("Não consegui ler suas estatísticas persistidas agora.")
+                .await?;
+            return Ok(());
+        }
+    };
+
+    let message = if let Some(favorite_command) = summary.favorite_command {
+        format!(
+            "Persistência ativa. Você usou {total} comandos em {distinct} comandos diferentes. Favorito: `/{favorite}` ({count} vezes).",
+            total = summary.total_uses,
+            distinct = summary.distinct_commands,
+            favorite = favorite_command,
+            count = summary.favorite_count,
+        )
+    } else {
+        "Persistência ativa, mas ainda não há comandos salvos para você.".to_string()
+    };
 
     ctx.say(message).await?;
     Ok(())

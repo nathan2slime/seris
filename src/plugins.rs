@@ -84,7 +84,7 @@ impl Plugin for UtilityPlugin {
     }
 
     fn commands(&self) -> Vec<Command<Data, Error>> {
-        vec![utility::about(), utility::uptime()]
+        vec![utility::about(), utility::uptime(), utility::stats()]
     }
 }
 

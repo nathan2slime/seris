@@ -5,6 +5,8 @@ use seris::config::load_config;
 #[cfg(feature = "bot")]
 use seris::dashboard::DashboardState;
 #[cfg(feature = "bot")]
+use seris::database::Database;
+#[cfg(feature = "bot")]
 use seris::health::HealthState;
 use std::{
     sync::Arc,
@@ -67,6 +69,7 @@ async fn run() -> Result<(), Error> {
     let config = load_config()?;
     let intents = GatewayIntents::non_privileged();
     let discord_token = config.discord_token.clone();
+    let database = Arc::new(Database::open_default()?);
     let dashboard = Arc::new(DashboardState::new());
     let started_at = Instant::now();
     let health = Arc::new(HealthState::new());
@@ -97,7 +100,11 @@ async fn run() -> Result<(), Error> {
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data { config, started_at })
+                Ok(Data {
+                    config,
+                    database: Arc::clone(&database),
+                    started_at,
+                })
             })
         })
         .build();

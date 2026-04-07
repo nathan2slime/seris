@@ -20,6 +20,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Clean permission boundaries
 * Predictable behavior
 * Plugin-based command registry
+* SQLite-backed persistence
 * Minimal Docker footprint
 * Fast startup, low memory usage
 * Lightweight admin TUI dashboard
@@ -45,6 +46,7 @@ All commands are **slash commands** (`/`).
 5. **Utility Commands**
    `/about` — Shows bot metadata.
    `/uptime` — Shows process uptime.
+   `/stats` — Shows persisted command stats.
 
 ---
 
@@ -86,6 +88,7 @@ Environment variable fallbacks are also supported for secrets:
 
 * `SERIS_DISCORD_TOKEN`
 * `SERIS_NASA_API_KEY`
+* `SERIS_DB_FILE`
 
 Monitoring:
 

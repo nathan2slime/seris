@@ -13,6 +13,10 @@ use crate::services::jikan;
     description_localized("pt-BR", "Recomendação de um mangá para você")
 )]
 pub async fn random(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.data()
+        .database
+        .record_command_usage_best_effort(ctx.author().id, "get_random_manga");
+
     let response = jikan::get_random_manga().await;
 
     match response {
