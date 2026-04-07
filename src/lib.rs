@@ -9,6 +9,8 @@ pub mod dashboard;
 #[cfg(feature = "bot")]
 pub mod embeds;
 #[cfg(feature = "bot")]
+pub mod health;
+#[cfg(feature = "bot")]
 pub mod services;
 #[cfg(test)]
 mod test_utils;

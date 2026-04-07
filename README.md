@@ -82,7 +82,50 @@ Environment variable fallbacks are also supported for secrets:
 * `SERIS_DISCORD_TOKEN`
 * `SERIS_NASA_API_KEY`
 
+Monitoring:
+
+* `GET /health` on port `8080` returns `200` when the process is up.
+* `GET /ready` returns `200` after Discord is connected and `503` otherwise.
+* The Docker image includes a `HEALTHCHECK` against `/ready`.
+
 ---
+
+## 🧱 Architecture
+
+```mermaid
+flowchart LR
+  Discord[Discord Gateway] --> Handler[Serenity event handler]
+  Handler --> Commands[Slash commands]
+  Commands --> Embeds[Embed builders]
+  Commands --> Services[API clients]
+  Services --> Jikan[Jikan random anime/manga]
+  Services --> NASA[NASA APOD]
+  Handler --> Health[Health state]
+  Health --> HealthHTTP[HTTP /health and /ready]
+  HealthHTTP --> Docker[Docker healthcheck]
+```
+
+The bot keeps the command layer thin: commands call services, services fetch API data, and embeds format the response for Discord.
+
+See also:
+
+* `docs/architecture.md`
+* `docs/api-endpoints.md`
+
+---
+
+## 🛟 Troubleshooting
+
+* If the bot exits immediately, confirm `discord_token` and `nasa_api_key` are set in the config file or environment.
+* If `/ready` keeps returning `503`, the Discord client has not connected yet or lost its shard connection.
+* If Docker reports an unhealthy container, confirm port `8080` is exposed and no other process is binding it.
+* If CLI commands ask for `sudo`, that is expected for service and config operations that modify system paths.
+
+---
+
+## 🚀 Deployment
+
+Platform-specific deployment notes live in `docs/deployment.md`.
 
 ## ▶️ Running Locally
 
@@ -155,6 +198,13 @@ curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install
 If you prefer extracting a release bundle manually, run the bundled local installer instead:
 
 * Linux: `sudo ./install-local.sh`
+
+---
+
+## 📚 API Endpoints
+
+The external and internal endpoints used by Seris are documented in `docs/api-endpoints.md`.
+
 ---
 
 ## 🐳 Docker (Minimal Image)
