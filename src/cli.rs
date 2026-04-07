@@ -6,11 +6,12 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use crate::config::config_file_path;
+
 const APP_NAME: &str = "seris";
 const REPO_OWNER: &str = "nathan2slime";
 const REPO_NAME: &str = "seris";
 const SERVICE_NAME: &str = "seris.service";
-const SYSTEM_CONFIG_PATH: &str = "/opt/seris/.config/seris/config.toml";
 
 /// Top-level CLI actions.
 pub enum CliAction {
@@ -58,14 +59,16 @@ fn handle_config(args: &[String]) -> Result<CliAction, String> {
         return Err(format!("missing config subcommand\n\n{}", usage()));
     };
 
+    let path = config_file_path().ok_or_else(|| "could not determine config path".to_string())?;
+
     match command {
         "path" => {
-            println!("{}", config_path().display());
+            println!("{}", path.display());
             Ok(CliAction::Exit(0))
         }
         "edit" => {
             let editor = sanitize_editor(env::var("EDITOR").unwrap_or_else(|_| "vi".to_string()))?;
-            let path = normalize_edit_path(config_path())?;
+            let path = normalize_edit_path(path)?;
             log::info!("editing config at {}", path.display());
             run_sudoedit(path, editor)?;
             Ok(CliAction::Exit(0))
@@ -290,10 +293,6 @@ fn current_uid() -> Option<u32> {
         .trim()
         .parse::<u32>()
         .ok()
-}
-
-fn config_path() -> PathBuf {
-    PathBuf::from(env::var("SERIS_CONFIG_FILE").unwrap_or_else(|_| SYSTEM_CONFIG_PATH.to_string()))
 }
 
 fn print_help() {
