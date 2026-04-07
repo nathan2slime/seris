@@ -11,7 +11,9 @@ fn registers_expected_commands() {
             "clear",
             "apod",
             "get_random_anime",
-            "get_random_manga"
+            "get_random_manga",
+            "about",
+            "uptime"
         ]
     );
 }

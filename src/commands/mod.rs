@@ -8,6 +8,7 @@ pub mod clear;
 pub mod manga;
 pub mod nasa;
 pub mod ping;
+pub mod utility;
 
 /// Returns every registered Discord slash command.
 pub fn commands() -> Vec<Command<Data, Error>> {
@@ -17,6 +18,8 @@ pub fn commands() -> Vec<Command<Data, Error>> {
         nasa::apod(),
         anime::random(),
         manga::random(),
+        utility::about(),
+        utility::uptime(),
     ]
 }
 
@@ -35,7 +38,9 @@ mod tests {
                 "clear",
                 "apod",
                 "get_random_anime",
-                "get_random_manga"
+                "get_random_manga",
+                "about",
+                "uptime"
             ]
         );
     }

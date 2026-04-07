@@ -4,7 +4,10 @@ use seris::commands::commands;
 use seris::config::load_config;
 #[cfg(feature = "bot")]
 use seris::health::HealthState;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 #[cfg(feature = "bot")]
 use seris::types::{Data, Error};
@@ -62,6 +65,7 @@ async fn run() -> Result<(), Error> {
     let config = load_config()?;
     let intents = GatewayIntents::non_privileged();
     let discord_token = config.discord_token.clone();
+    let started_at = Instant::now();
     let health = Arc::new(HealthState::new());
 
     tokio::spawn({
@@ -78,10 +82,10 @@ async fn run() -> Result<(), Error> {
             commands: commands(),
             ..Default::default()
         })
-        .setup(|ctx, _ready, framework| {
+        .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data { config })
+                Ok(Data { config, started_at })
             })
         })
         .build();

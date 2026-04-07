@@ -2,6 +2,7 @@
 
 use crate::config::AppConfig;
 use reqwest::StatusCode;
+use std::time::Instant;
 use thiserror::Error;
 
 /// Application-wide error type.
@@ -60,6 +61,8 @@ pub enum SerisError {
 pub struct Data {
     /// Loaded application configuration.
     pub config: AppConfig,
+    /// When the process started.
+    pub started_at: Instant,
 }
 
 /// Canonical error alias used by command handlers.
