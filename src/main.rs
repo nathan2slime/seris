@@ -2,6 +2,8 @@
 use seris::commands::commands;
 #[cfg(feature = "bot")]
 use seris::config::load_config;
+#[cfg(feature = "bot")]
+use seris::dashboard::DashboardState;
 use std::{sync::Arc, time::Duration};
 
 #[cfg(feature = "bot")]
@@ -60,6 +62,16 @@ async fn run() -> Result<(), Error> {
     let config = load_config()?;
     let intents = GatewayIntents::non_privileged();
     let discord_token = config.discord_token.clone();
+    let dashboard = Arc::new(DashboardState::new());
+
+    tokio::spawn({
+        let dashboard = Arc::clone(&dashboard);
+        async move {
+            if let Err(err) = seris::dashboard::start(dashboard).await {
+                log::error!("dashboard server failed: {err}");
+            }
+        }
+    });
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -75,7 +87,7 @@ async fn run() -> Result<(), Error> {
         .build();
 
     let mut client = ClientBuilder::new(discord_token, intents)
-        .event_handler(seris::utils::Handler)
+        .event_handler(seris::utils::Handler::new(Arc::clone(&dashboard)))
         .framework(framework)
         .await?;
 

@@ -21,6 +21,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Predictable behavior
 * Minimal Docker footprint
 * Fast startup, low memory usage
+* Lightweight admin dashboard
 
 ---
 
@@ -88,6 +89,16 @@ Environment variable fallbacks are also supported for secrets:
 ```bash
 cargo run --release
 ```
+
+The dashboard is available at `http://127.0.0.1:8080/` when the bot is running.
+
+## 🖥️ Admin Dashboard
+
+Seris serves a small operational dashboard from the same HTTP port used for status checks.
+
+* `/` or `/dashboard` - dashboard UI
+* `/health` - liveness check
+* `/ready` - Discord readiness check
 
 ## 🧰 Admin CLI
 
@@ -159,7 +170,7 @@ docker build -t seris .
 ### Run
 
 ```bash
-docker run --env-file .env seris
+docker run --env-file .env -p 8080:8080 seris
 ```
 
 * Image size: **~4–6 MB**
