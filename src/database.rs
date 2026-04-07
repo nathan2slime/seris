@@ -169,6 +169,7 @@ fn default_database_path() -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::Database;
+    use crate::benchmarks;
     use serenity::all::UserId;
     use tempfile::tempdir;
 
@@ -195,5 +196,22 @@ mod tests {
         assert_eq!(summary.distinct_commands, 2);
         assert_eq!(summary.favorite_command.as_deref(), Some("ping"));
         assert_eq!(summary.favorite_count, 2);
+    }
+
+    #[test]
+    #[ignore]
+    fn benchmarks_command_usage_writes() {
+        let dir = tempdir().expect("temp dir");
+        let db_path = dir.path().join("seris.sqlite3");
+        let database = Database::open(&db_path).expect("database");
+        let user_id = UserId::new(42);
+
+        let sample = benchmarks::measure(1_000, || {
+            database
+                .record_command_usage(user_id, "ping")
+                .expect("usage write");
+        });
+
+        assert_eq!(sample.iterations, 1_000);
     }
 }

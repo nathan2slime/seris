@@ -21,6 +21,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Predictable behavior
 * Plugin-based command registry
 * SQLite-backed persistence
+* Benchmark helpers for critical paths
 * Minimal Docker footprint
 * Fast startup, low memory usage
 * Lightweight admin TUI dashboard
@@ -47,6 +48,16 @@ All commands are **slash commands** (`/`).
    `/about` — Shows bot metadata.
    `/uptime` — Shows process uptime.
    `/stats` — Shows persisted command stats.
+
+## ⚡ Benchmarking
+
+Lightweight benchmark-style checks live as ignored tests.
+
+Run them with:
+
+```bash
+cargo test --locked --all-features -- --ignored --nocapture
+```
 
 ---
 
