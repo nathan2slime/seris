@@ -47,4 +47,15 @@ mod tests {
             vec!["core", "content", "utility"]
         );
     }
+
+    #[test]
+    #[ignore]
+    fn benchmarks_registry_flattening() {
+        let sample = crate::benchmarks::measure(10_000, || {
+            let _ = commands();
+        });
+
+        assert_eq!(sample.iterations, 10_000);
+        assert!(crate::benchmarks::average_duration(sample) >= std::time::Duration::from_nanos(0));
+    }
 }
