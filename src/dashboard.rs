@@ -1,28 +1,42 @@
-//! Lightweight admin dashboard and runtime status server.
+//! Terminal dashboard for the bot runtime.
 
 use std::{
-    fmt::Write as _,
+    io::{self, stdout, IsTerminal, Stdout},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
+    thread,
     time::{Duration, Instant},
 };
 
-use log::{info, warn};
-use serenity::gateway::ConnectionStage;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::TcpListener,
+use crossterm::{
+    cursor,
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
+    },
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::info;
+use ratatui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, Gauge, List, ListItem, Paragraph},
+    Terminal,
+};
+use serenity::gateway::ConnectionStage;
 
 use crate::types::Error;
 
-const DASHBOARD_ADDR: &str = "0.0.0.0:8080";
+const TICK_RATE: Duration = Duration::from_millis(250);
 
-/// Shared runtime state exposed to the dashboard.
+/// Shared runtime state exposed in the terminal dashboard.
 pub struct DashboardState {
     ready: AtomicBool,
+    stop_requested: AtomicBool,
     started_at: Instant,
 }
 
@@ -31,6 +45,7 @@ impl DashboardState {
     pub fn new() -> Self {
         Self {
             ready: AtomicBool::new(false),
+            stop_requested: AtomicBool::new(false),
             started_at: Instant::now(),
         }
     }
@@ -54,6 +69,16 @@ impl DashboardState {
     pub fn uptime(&self) -> Duration {
         self.started_at.elapsed()
     }
+
+    /// Requests the dashboard loop to stop.
+    pub fn request_exit(&self) {
+        self.stop_requested.store(true, Ordering::SeqCst);
+    }
+
+    /// Returns whether shutdown has been requested.
+    pub fn should_exit(&self) -> bool {
+        self.stop_requested.load(Ordering::SeqCst)
+    }
 }
 
 impl Default for DashboardState {
@@ -76,116 +101,220 @@ pub fn apply_stage_update(state: &DashboardState, stage: ConnectionStage) {
     }
 }
 
-/// Starts the dashboard and status server.
-pub async fn start(state: Arc<DashboardState>) -> Result<(), Error> {
-    let listener = TcpListener::bind(DASHBOARD_ADDR).await?;
-    let addr = listener.local_addr()?;
-    info!("dashboard server listening on {addr}");
+/// Starts the terminal dashboard.
+pub fn start(state: Arc<DashboardState>) -> Result<(), Error> {
+    if !io::stdout().is_terminal() {
+        info!("dashboard TUI disabled because stdout is not a terminal");
+        while !state.should_exit() {
+            thread::sleep(TICK_RATE);
+        }
 
-    loop {
-        let (mut socket, peer) = listener.accept().await?;
-        let state = Arc::clone(&state);
+        return Ok(());
+    }
 
-        tokio::spawn(async move {
-            let mut buffer = [0u8; 1024];
-            let Ok(bytes_read) =
-                tokio::time::timeout(Duration::from_secs(2), socket.read(&mut buffer)).await
-            else {
-                return;
-            };
+    let mut session = TerminalSession::enter()?;
+    session.run(&state)?;
+    Ok(())
+}
 
-            let Ok(bytes_read) = bytes_read else {
-                return;
-            };
+struct TerminalSession {
+    terminal: Terminal<CrosstermBackend<Stdout>>,
+}
 
-            let request = String::from_utf8_lossy(&buffer[..bytes_read]);
-            let path = request
-                .lines()
-                .next()
-                .and_then(|line| line.split_whitespace().nth(1))
-                .unwrap_or("/");
+impl TerminalSession {
+    fn enter() -> Result<Self, Error> {
+        enable_raw_mode()?;
 
-            let response = response_for_path(path, state.is_ready(), state.uptime());
-            let body_len = response.body.len();
-            let response = format!(
-                "HTTP/1.1 {status} {status_text}\r\nContent-Type: {content_type}\r\nContent-Length: {body_len}\r\nConnection: close\r\n\r\n{body}",
-                status = response.status,
-                status_text = response.status_text,
-                content_type = response.content_type,
-                body_len = body_len,
-                body = response.body,
-            );
+        let mut stdout = stdout();
+        execute!(
+            stdout,
+            EnterAlternateScreen,
+            EnableMouseCapture,
+            cursor::Hide
+        )?;
 
-            if let Err(err) = socket.write_all(response.as_bytes()).await {
-                warn!("failed to write dashboard response to {peer}: {err}");
+        let backend = CrosstermBackend::new(stdout);
+        let terminal = Terminal::new(backend)?;
+        Ok(Self { terminal })
+    }
+
+    fn run(&mut self, state: &DashboardState) -> Result<(), Error> {
+        while !state.should_exit() {
+            self.terminal.draw(|frame| render_dashboard(frame, state))?;
+
+            if event::poll(TICK_RATE)? {
+                match event::read()? {
+                    Event::Key(key)
+                        if key.kind == KeyEventKind::Press || key.kind == KeyEventKind::Repeat =>
+                    {
+                        match key.code {
+                            KeyCode::Char('q') | KeyCode::Esc => state.request_exit(),
+                            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                                state.request_exit();
+                            }
+                            _ => {}
+                        }
+                    }
+                    Event::Resize(_, _) => {}
+                    _ => {}
+                }
             }
-        });
+        }
+
+        Ok(())
     }
 }
 
-struct Response {
-    status: u16,
-    status_text: &'static str,
-    content_type: &'static str,
-    body: String,
-}
-
-fn response_for_path(path: &str, ready: bool, uptime: Duration) -> Response {
-    match path {
-        "/" | "/dashboard" => Response {
-            status: 200,
-            status_text: "OK",
-            content_type: "text/html; charset=utf-8",
-            body: dashboard_page(ready, uptime),
-        },
-        "/health" => Response {
-            status: 200,
-            status_text: "OK",
-            content_type: "text/plain; charset=utf-8",
-            body: "ok".to_string(),
-        },
-        "/ready" if ready => Response {
-            status: 200,
-            status_text: "OK",
-            content_type: "text/plain; charset=utf-8",
-            body: "ready".to_string(),
-        },
-        "/ready" => Response {
-            status: 503,
-            status_text: "Service Unavailable",
-            content_type: "text/plain; charset=utf-8",
-            body: "not ready".to_string(),
-        },
-        _ => Response {
-            status: 404,
-            status_text: "Not Found",
-            content_type: "text/plain; charset=utf-8",
-            body: "not found".to_string(),
-        },
+impl Drop for TerminalSession {
+    fn drop(&mut self) {
+        let _ = disable_raw_mode();
+        let _ = execute!(
+            self.terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            cursor::Show
+        );
+        let _ = self.terminal.show_cursor();
     }
 }
 
-fn dashboard_page(ready: bool, uptime: Duration) -> String {
-    let status_label = if ready { "Ready" } else { "Connecting" };
-    let status_blurb = if ready {
-        "The bot is connected to Discord and can serve commands."
+struct DashboardSnapshot {
+    ready: bool,
+    status_label: &'static str,
+    status_message: &'static str,
+    uptime: String,
+}
+
+fn dashboard_snapshot(state: &DashboardState) -> DashboardSnapshot {
+    let ready = state.is_ready();
+
+    DashboardSnapshot {
+        ready,
+        status_label: if ready { "CONNECTED" } else { "CONNECTING" },
+        status_message: if ready {
+            "Discord connection is healthy and commands can run."
+        } else {
+            "Waiting for the Discord gateway to finish connecting."
+        },
+        uptime: format_duration(state.uptime()),
+    }
+}
+
+fn render_dashboard(frame: &mut ratatui::Frame<'_>, state: &DashboardState) {
+    let snapshot = dashboard_snapshot(state);
+    let area = frame.area();
+
+    let outer = Block::default()
+        .title(Line::from(vec![
+            Span::styled(
+                " Seris Admin Dashboard ",
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" TUI ", Style::default().fg(Color::DarkGray)),
+        ]))
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::DarkGray));
+    let inner = outer.inner(area);
+    frame.render_widget(outer, area);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints([
+            Constraint::Length(5),
+            Constraint::Length(9),
+            Constraint::Min(7),
+            Constraint::Length(2),
+        ])
+        .split(inner);
+
+    let header = Paragraph::new(vec![
+        Line::from(vec![
+            Span::styled(
+                "Status: ",
+                Style::default()
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                snapshot.status_label,
+                Style::default().fg(status_color(snapshot.ready)),
+            ),
+        ]),
+        Line::from(vec![Span::raw(snapshot.status_message)]),
+        Line::from(vec![
+            Span::styled(
+                "Uptime: ",
+                Style::default()
+                    .fg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(snapshot.uptime, Style::default().fg(Color::White)),
+        ]),
+    ])
+    .block(Block::default().title("Runtime").borders(Borders::ALL));
+    frame.render_widget(header, chunks[0]);
+
+    let middle = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(42), Constraint::Percentage(58)])
+        .split(chunks[1]);
+
+    let readiness = Gauge::default()
+        .block(Block::default().title("Readiness").borders(Borders::ALL))
+        .gauge_style(
+            Style::default()
+                .fg(status_color(snapshot.ready))
+                .bg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+        .percent(if snapshot.ready { 100 } else { 0 })
+        .label(snapshot.status_label);
+    frame.render_widget(readiness, middle[0]);
+
+    let panel = Paragraph::new(vec![
+        Line::from("Live signals"),
+        Line::from("- /health and /ready remain available on port 8080"),
+        Line::from("- the dashboard follows Discord gateway readiness"),
+        Line::from("- q or Ctrl-C closes the TUI"),
+    ])
+    .block(
+        Block::default()
+            .title("Operator Notes")
+            .borders(Borders::ALL),
+    );
+    frame.render_widget(panel, middle[1]);
+
+    let commands = List::new(vec![
+        ListItem::new("/ping"),
+        ListItem::new("/clear"),
+        ListItem::new("/nasa apod"),
+        ListItem::new("/anime random"),
+        ListItem::new("/manga random"),
+    ])
+    .block(
+        Block::default()
+            .title("Slash Commands")
+            .borders(Borders::ALL),
+    );
+    frame.render_widget(commands, chunks[2]);
+
+    let footer = Paragraph::new("q / Ctrl-C to exit the dashboard").style(
+        Style::default()
+            .fg(Color::DarkGray)
+            .add_modifier(Modifier::ITALIC),
+    );
+    frame.render_widget(footer, chunks[3]);
+}
+
+fn status_color(ready: bool) -> Color {
+    if ready {
+        Color::Green
     } else {
-        "The bot is starting up or reconnecting to Discord."
-    };
-    let mut html = String::new();
-
-    write!(
-        html,
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Seris Admin Dashboard</title><style>body{{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0f172a;color:#e2e8f0;}}main{{max-width:820px;margin:0 auto;padding:48px 24px;}}.panel{{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.2);}}.badge{{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:{badge_bg};color:{badge_fg};}}h1{{margin:16px 0 8px;font-size:clamp(2rem,4vw,3rem);}}p{{line-height:1.6;color:#cbd5e1;}}dl{{display:grid;grid-template-columns:140px 1fr;gap:12px 16px;margin:24px 0 0;}}dt{{color:#94a3b8;font-weight:600;}}dd{{margin:0;color:#f8fafc;}}.links{{margin-top:24px;display:flex;flex-wrap:wrap;gap:12px;}}a{{color:#93c5fd;text-decoration:none;}}a:hover{{text-decoration:underline;}}footer{{margin-top:20px;color:#64748b;font-size:14px;}}</style></head><body><main><div class=\"panel\"><span class=\"badge\">{status_label}</span><h1>Seris Admin Dashboard</h1><p>{status_blurb}</p><dl><dt>Uptime</dt><dd>{uptime}</dd><dt>Health</dt><dd><a href=\"/health\">/health</a></dd><dt>Readiness</dt><dd><a href=\"/ready\">/ready</a></dd></dl><div class=\"links\"><a href=\"/dashboard\">Refresh dashboard</a></div><footer>Built for lightweight operational checks and manual oversight.</footer></div></main></body></html>",
-        badge_bg = if ready { "#14532d" } else { "#78350f" },
-        badge_fg = if ready { "#86efac" } else { "#fcd34d" },
-        status_label = status_label,
-        status_blurb = status_blurb,
-        uptime = format_duration(uptime),
-    )
-    .expect("dashboard template write");
-
-    html
+        Color::Yellow
+    }
 }
 
 fn format_duration(duration: Duration) -> String {
@@ -208,33 +337,9 @@ fn format_duration(duration: Duration) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        apply_stage_update, format_duration, response_for_path, stage_is_ready, DashboardState,
-    };
+    use super::{dashboard_snapshot, format_duration, stage_is_ready, DashboardState};
     use serenity::gateway::ConnectionStage;
     use std::time::Duration;
-
-    #[test]
-    fn dashboard_route_returns_html() {
-        let response = response_for_path("/", false, Duration::from_secs(65));
-
-        assert_eq!(response.status, 200);
-        assert_eq!(response.content_type, "text/html; charset=utf-8");
-        assert!(response.body.contains("Seris Admin Dashboard"));
-        assert!(response.body.contains("Connecting"));
-        assert!(response.body.contains("1m 05s"));
-    }
-
-    #[test]
-    fn ready_route_reflects_readiness() {
-        let ready = response_for_path("/ready", true, Duration::from_secs(0));
-        let not_ready = response_for_path("/ready", false, Duration::from_secs(0));
-
-        assert_eq!(ready.status, 200);
-        assert_eq!(ready.body, "ready");
-        assert_eq!(not_ready.status, 503);
-        assert_eq!(not_ready.body, "not ready");
-    }
 
     #[test]
     fn only_connected_stage_is_ready() {
@@ -244,13 +349,27 @@ mod tests {
     }
 
     #[test]
-    fn stage_updates_flip_readiness() {
+    fn dashboard_snapshot_reflects_readiness() {
         let state = DashboardState::new();
-        apply_stage_update(&state, ConnectionStage::Disconnected);
-        assert!(!state.is_ready());
+        let snapshot = dashboard_snapshot(&state);
 
-        apply_stage_update(&state, ConnectionStage::Connected);
-        assert!(state.is_ready());
+        assert_eq!(snapshot.status_label, "CONNECTING");
+        assert!(snapshot.status_message.contains("Waiting"));
+
+        state.mark_ready();
+        let snapshot = dashboard_snapshot(&state);
+
+        assert_eq!(snapshot.status_label, "CONNECTED");
+        assert!(snapshot.status_message.contains("healthy"));
+    }
+
+    #[test]
+    fn dashboard_state_exit_flag_flips() {
+        let state = DashboardState::new();
+
+        assert!(!state.should_exit());
+        state.request_exit();
+        assert!(state.should_exit());
     }
 
     #[test]

@@ -21,7 +21,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Predictable behavior
 * Minimal Docker footprint
 * Fast startup, low memory usage
-* Lightweight admin dashboard
+* Lightweight admin TUI dashboard
 
 ---
 
@@ -133,15 +133,15 @@ Platform-specific deployment notes live in `docs/deployment.md`.
 cargo run --release
 ```
 
-The dashboard is available at `http://127.0.0.1:8080/` when the bot is running.
+The TUI dashboard opens in the terminal when Seris runs interactively.
 
 ## 🖥️ Admin Dashboard
 
-Seris serves a small operational dashboard from the same HTTP port used for status checks.
+Seris shows a small terminal dashboard alongside the bot runtime.
 
-* `/` or `/dashboard` - dashboard UI
-* `/health` - liveness check
-* `/ready` - Discord readiness check
+* `q` or `Ctrl-C` closes the dashboard
+* `/health` - liveness check on port `8080`
+* `/ready` - Discord readiness check on port `8080`
 
 ## 🧰 Admin CLI
 
@@ -220,13 +220,14 @@ docker build -t seris .
 ### Run
 
 ```bash
-docker run --env-file .env -p 8080:8080 seris
+docker run -it --env-file .env -p 8080:8080 seris
 ```
 
 * Image size: **~4–6 MB**
 * Static binary
 * No shell, no package manager
 * Runs as non-root
+* Shows the TUI only when attached to a terminal
 
 ---
 

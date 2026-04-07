@@ -4,10 +4,10 @@
 
 ```bash
 docker build -t seris .
-docker run --env-file .env -p 8080:8080 seris
+docker run -it --env-file .env -p 8080:8080 seris
 ```
 
-The container exposes port `8080` for `/health` and `/ready`.
+The container exposes port `8080` for `/health` and `/ready`, and the TUI is shown when a terminal is attached.
 
 ## systemd
 
@@ -44,3 +44,4 @@ Required values:
 * Run the container or service with the health endpoint reachable.
 * Keep the config file out of the image when using external secrets.
 * Monitor `/ready` rather than just process liveness.
+* Use an interactive terminal if you want the dashboard UI.
