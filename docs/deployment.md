@@ -21,6 +21,15 @@ seris service logs --follow
 
 The bundled installer places files under `/opt/seris` and configures a `systemd` service.
 
+To make the CLI available in Bash, add the install directory to your shell `PATH`:
+
+```bash
+echo 'export PATH="$PATH:/opt/seris"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+This is what makes `seris service status` and the rest of the CLI usable after installation.
+
 ## GitHub Releases
 
 Published releases include:
