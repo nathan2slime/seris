@@ -5,7 +5,8 @@ set -eu
 APP_NAME="seris"
 INSTALL_DIR="/opt/${APP_NAME}"
 BIN_PATH="${INSTALL_DIR}/${APP_NAME}"
-USER_CONFIG_DIR="${INSTALL_DIR}/.config/${APP_NAME}"
+SERVICE_HOME_DIR="/home/${APP_NAME}"
+USER_CONFIG_DIR="${SERVICE_HOME_DIR}/.config/${APP_NAME}"
 CONFIG_FILE="${USER_CONFIG_DIR}/config.toml"
 SERVICE_NAME="${APP_NAME}.service"
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
@@ -75,8 +76,9 @@ create_user_and_group() {
     if ! id -u "${SYSTEM_USER}" >/dev/null 2>&1; then
         useradd \
             --system \
+            --create-home \
             --gid "${SYSTEM_GROUP}" \
-            --home-dir "${INSTALL_DIR}" \
+            --home-dir "${SERVICE_HOME_DIR}" \
             --shell "${NOLOGIN_SHELL}" \
             "${SYSTEM_USER}"
     fi
@@ -84,14 +86,14 @@ create_user_and_group() {
 
 install_binary() {
     say "[seris-chan] Carrying my binary heart over to ${BIN_PATH}..."
-    mkdir -p "${INSTALL_DIR}" "${USER_CONFIG_DIR}"
+    mkdir -p "${INSTALL_DIR}" "${SERVICE_HOME_DIR}" "${USER_CONFIG_DIR}"
     install -m 0755 "./${APP_NAME}" "${BIN_PATH}"
 
     if [ -f "./config.example.toml" ] && [ ! -f "${CONFIG_FILE}" ]; then
         install -m 0640 "./config.example.toml" "${CONFIG_FILE}"
     fi
 
-    chown -R "${SYSTEM_USER}:${SYSTEM_GROUP}" "${INSTALL_DIR}"
+    chown -R "${SYSTEM_USER}:${SYSTEM_GROUP}" "${INSTALL_DIR}" "${SERVICE_HOME_DIR}"
 }
 
 write_service() {
@@ -107,8 +109,8 @@ Type=simple
 User=${SYSTEM_USER}
 Group=${SYSTEM_GROUP}
 WorkingDirectory=${INSTALL_DIR}
-Environment=HOME=${INSTALL_DIR}
-Environment=XDG_CONFIG_HOME=${INSTALL_DIR}/.config
+Environment=HOME=${SERVICE_HOME_DIR}
+Environment=XDG_CONFIG_HOME=${SERVICE_HOME_DIR}/.config
 Environment=SERIS_CONFIG_FILE=${CONFIG_FILE}
 ExecStart=${BIN_PATH}
 Restart=always

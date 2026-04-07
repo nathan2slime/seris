@@ -20,6 +20,7 @@ seris service logs --follow
 ```
 
 The bundled installer places files under `/opt/seris` and configures a `systemd` service.
+The service config lives at `/home/seris/.config/seris/config.toml`.
 
 ## GitHub Releases
 
