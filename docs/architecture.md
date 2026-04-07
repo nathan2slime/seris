@@ -10,14 +10,16 @@ flowchart LR
   Commands --> Services[Service clients]
   Services --> Jikan[Jikan API]
   Services --> NASA[NASA APOD API]
+  Handler --> Dashboard[TUI dashboard]
   Handler --> Health[Health state]
   Health --> HealthHTTP[Health server]
 ```
 
 ## Runtime pieces
 
-* `src/main.rs` boots the bot, CLI, and health server.
+* `src/main.rs` boots the bot, TUI dashboard, and health server.
 * `src/utils.rs` maps Serenity events into readiness state.
+* `src/dashboard.rs` renders the terminal dashboard.
 * `src/commands/` contains the slash command entry points.
 * `src/services/` handles external API calls and retry/circuit behavior.
 * `src/embeds/` turns service payloads into Discord messages.
