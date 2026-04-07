@@ -1,5 +1,6 @@
 //! Slash command registrations.
 
+use crate::plugins;
 use crate::types::{Data, Error};
 use poise::Command;
 
@@ -12,20 +13,13 @@ pub mod utility;
 
 /// Returns every registered Discord slash command.
 pub fn commands() -> Vec<Command<Data, Error>> {
-    vec![
-        ping::ping(),
-        clear::clear(),
-        nasa::apod(),
-        anime::random(),
-        manga::random(),
-        utility::about(),
-        utility::uptime(),
-    ]
+    plugins::registry().commands()
 }
 
 #[cfg(test)]
 mod tests {
     use super::commands;
+    use crate::plugins;
 
     #[test]
     fn registers_all_expected_commands() {
@@ -42,6 +36,14 @@ mod tests {
                 "about",
                 "uptime"
             ]
+        );
+    }
+
+    #[test]
+    fn registry_groups_commands_by_plugin() {
+        assert_eq!(
+            plugins::registry().names(),
+            vec!["core", "content", "utility"]
         );
     }
 }
