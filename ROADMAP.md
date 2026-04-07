@@ -240,7 +240,7 @@ This roadmap outlines planned improvements for the Seris Discord bot, prioritize
 - [ ] Add more utility commands
 - [ ] Implement command cooldowns
 - [ ] Add database support for persistence
-- [ ] Consider plugin architecture
+- [x] Consider plugin architecture
 - [ ] Add admin dashboard (web UI)
 
 **Estimated Effort:** Variable  

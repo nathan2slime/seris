@@ -19,6 +19,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Slash commands (Discord Interactions)
 * Clean permission boundaries
 * Predictable behavior
+* Plugin-based command registry
 * SQLite-backed persistence
 * Minimal Docker footprint
 * Fast startup, low memory usage

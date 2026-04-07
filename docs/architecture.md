@@ -5,7 +5,8 @@ Seris follows a small, layered flow:
 ```mermaid
 flowchart LR
   Discord[Discord Gateway] --> Handler[Serenity handler]
-  Handler --> Commands[Slash commands]
+  Handler --> Plugins[Plugin registry]
+  Plugins --> Commands[Slash commands]
   Commands --> Database[SQLite persistence]
   Commands --> Embeds[Embed builders]
   Commands --> Services[Service clients]
@@ -20,6 +21,7 @@ flowchart LR
 
 * `src/main.rs` boots the bot, TUI dashboard, and health server.
 * `src/utils.rs` maps Serenity events into readiness state.
+* `src/plugins.rs` groups slash commands into internal plugins.
 * `src/database.rs` stores persistent command usage in SQLite.
 * `src/dashboard.rs` renders the terminal dashboard.
 * `src/commands/` contains the slash command entry points.
@@ -30,7 +32,8 @@ flowchart LR
 
 1. Discord dispatches an interaction.
 2. Serenity hands it to the event handler or slash command.
-3. Commands record usage in SQLite when appropriate.
-4. Commands call a service client when data is needed.
-5. The service client fetches or caches the payload.
-6. An embed builder formats the response for Discord.
+3. The plugin registry groups commands by capability.
+4. Commands record usage in SQLite when appropriate.
+5. Commands call a service client when data is needed.
+6. The service client fetches or caches the payload.
+7. An embed builder formats the response for Discord.
