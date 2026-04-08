@@ -201,6 +201,7 @@ Bundle contents:
 ## 🛠️ Automatic Installers
 
 The Linux bootstrap installer downloads the Linux bundle, installs `seris` into `/opt/seris`, creates a `systemd` service, and enables it on boot.
+The service user stores its config in `/home/seris/.config/seris/config.toml`.
 
 ```bash
 curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh
