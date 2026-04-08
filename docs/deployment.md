@@ -19,17 +19,8 @@ seris service restart
 seris service logs --follow
 ```
 
-The bundled installer places files under `/opt/seris` and configures a `systemd` service.
+The bundled installer places files under `/opt/seris`, installs a `seris` command wired to the service config, and configures a `systemd` service.
 The service config lives at `/home/seris/.config/seris/config.toml`.
-
-To make the CLI available in Bash, add the install directory to your shell `PATH`:
-
-```bash
-echo 'export PATH="$PATH:/opt/seris"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-This is what makes `seris service status` and the rest of the CLI usable after installation.
 
 ## GitHub Releases
 

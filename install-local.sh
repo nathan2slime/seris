@@ -5,6 +5,7 @@ set -eu
 APP_NAME="seris"
 INSTALL_DIR="/opt/${APP_NAME}"
 BIN_PATH="${INSTALL_DIR}/${APP_NAME}"
+CLI_PATH="/usr/local/bin/${APP_NAME}"
 SERVICE_HOME_DIR="/home/${APP_NAME}"
 USER_CONFIG_DIR="${SERVICE_HOME_DIR}/.config/${APP_NAME}"
 CONFIG_FILE="${USER_CONFIG_DIR}/config.toml"
@@ -96,6 +97,23 @@ install_binary() {
     chown -R "${SYSTEM_USER}:${SYSTEM_GROUP}" "${INSTALL_DIR}" "${SERVICE_HOME_DIR}"
 }
 
+install_cli_wrapper() {
+    say "[seris-chan] Linking the seris command to the service config..."
+    cat > "${CLI_PATH}" <<EOF
+#!/bin/sh
+
+set -eu
+
+export HOME=${SERVICE_HOME_DIR}
+export XDG_CONFIG_HOME=${SERVICE_HOME_DIR}/.config
+export SERIS_CONFIG_FILE=${CONFIG_FILE}
+
+exec ${BIN_PATH} "\$@"
+EOF
+
+    chmod 0755 "${CLI_PATH}"
+}
+
 write_service() {
     say "[seris-chan] Writing a tiny bit of systemd magic..."
     cat > "${SERVICE_PATH}" <<EOF
@@ -160,6 +178,7 @@ verify_binary_deps
 find_nologin_shell
 create_user_and_group
 install_binary
+install_cli_wrapper
 write_service
 enable_service
 print_next_steps
