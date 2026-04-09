@@ -93,7 +93,6 @@ Seris reads application settings from TOML, with environment fallbacks for secre
 Build flags:
 
 * `bot` - Discord bot functionality
-* `cli` - admin CLI tools
 
 Environment variable fallbacks are also supported for secrets:
 
