@@ -24,7 +24,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Gauge, List, ListItem, Paragraph},
+    widgets::{Block, Borders, Gauge, Paragraph},
     Terminal,
 };
 use serenity::gateway::ConnectionStage;
@@ -207,7 +207,7 @@ fn render_dashboard(frame: &mut ratatui::Frame<'_>, state: &DashboardState) {
     let outer = Block::default()
         .title(Line::from(vec![
             Span::styled(
-                " Seris Admin Dashboard ",
+                " Series ",
                 Style::default()
                     .fg(Color::Cyan)
                     .add_modifier(Modifier::BOLD),
@@ -225,7 +225,6 @@ fn render_dashboard(frame: &mut ratatui::Frame<'_>, state: &DashboardState) {
         .constraints([
             Constraint::Length(5),
             Constraint::Length(9),
-            Constraint::Min(7),
             Constraint::Length(2),
         ])
         .split(inner);
@@ -287,26 +286,12 @@ fn render_dashboard(frame: &mut ratatui::Frame<'_>, state: &DashboardState) {
     );
     frame.render_widget(panel, middle[1]);
 
-    let commands = List::new(vec![
-        ListItem::new("/ping"),
-        ListItem::new("/clear"),
-        ListItem::new("/nasa apod"),
-        ListItem::new("/anime random"),
-        ListItem::new("/manga random"),
-    ])
-    .block(
-        Block::default()
-            .title("Slash Commands")
-            .borders(Borders::ALL),
-    );
-    frame.render_widget(commands, chunks[2]);
-
     let footer = Paragraph::new("q / Ctrl-C to exit the dashboard").style(
         Style::default()
             .fg(Color::DarkGray)
             .add_modifier(Modifier::ITALIC),
     );
-    frame.render_widget(footer, chunks[3]);
+    frame.render_widget(footer, chunks[2]);
 }
 
 fn status_color(ready: bool) -> Color {

@@ -1,7 +1,5 @@
 #[cfg(feature = "bot")]
 pub mod benchmarks;
-#[cfg(feature = "cli")]
-pub mod cli;
 #[cfg(feature = "bot")]
 pub mod commands;
 #[cfg(feature = "bot")]

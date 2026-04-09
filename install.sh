@@ -6,6 +6,10 @@ REPO_OWNER="nathan2slime"
 REPO_NAME="seris"
 APP_NAME="seris"
 DEFAULT_VERSION="__SERIS_DEFAULT_VERSION__"
+INSTALL_DIR="${HOME}/.local/bin"
+CONFIG_DIR="${HOME}/.config/${APP_NAME}"
+CONFIG_FILE="${CONFIG_DIR}/config.toml"
+BASHRC="${HOME}/.bashrc"
 
 say() {
     printf '%s\n' "$1"
@@ -63,7 +67,22 @@ resolve_version() {
     curl -fsSL "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
 }
 
-download_and_install() {
+append_bashrc_exports() {
+    if [ ! -f "${BASHRC}" ]; then
+        : > "${BASHRC}"
+    fi
+
+    if ! grep -Fq "# Seris local install" "${BASHRC}"; then
+        cat >> "${BASHRC}" <<EOF
+
+# Seris local install
+export PATH="\$HOME/.local/bin:\$PATH"
+export SERIS_CONFIG_FILE="\$HOME/.config/seris/config.toml"
+EOF
+    fi
+}
+
+install_bundle() {
     version="$1"
     arch="$2"
     target="${arch}-unknown-linux-gnu"
@@ -88,22 +107,35 @@ download_and_install() {
         exit 1
     fi
 
-    chmod +x "${package_dir}/install-local.sh"
-    say "[seris-chan] Handing things over to the local installer..."
-    (
-        cd "${package_dir}"
-        sh ./install-local.sh
-    )
+    if [ ! -f "${package_dir}/${APP_NAME}" ]; then
+        say "[seris-chan] I could not find the binary inside the release bundle."
+        exit 1
+    fi
+
+    require_command install
+    require_command mkdir
+    mkdir -p "${INSTALL_DIR}" "${CONFIG_DIR}"
+    install -m 0755 "${package_dir}/${APP_NAME}" "${INSTALL_DIR}/${APP_NAME}"
+
+    if [ -f "${package_dir}/config.example.toml" ] && [ ! -f "${CONFIG_FILE}" ]; then
+        install -m 0644 "${package_dir}/config.example.toml" "${CONFIG_FILE}"
+    fi
+
+    append_bashrc_exports
+
+    say "[seris-chan] Installed ${APP_NAME} to ${INSTALL_DIR}/${APP_NAME}"
+    say "[seris-chan] Config file: ${CONFIG_FILE}"
+    say "[seris-chan] Reload your shell with: source ${BASHRC}"
 }
 
 require_command uname
 require_command mktemp
 require_command tar
-require_command chmod
 require_command rm
 require_command sed
 require_command head
 require_command curl
+require_command grep
 
 version="$(resolve_version "${1:-}")"
 if [ -z "${version}" ]; then
@@ -113,4 +145,4 @@ fi
 
 detect_os
 arch="$(detect_arch)"
-download_and_install "${version}" "${arch}"
+install_bundle "${version}" "${arch}"
