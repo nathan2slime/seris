@@ -25,7 +25,6 @@ async fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
         .format_timestamp_secs()
         .init();
-
     match parse(std::env::args().skip(1)) {
         CliCommand::SelfUpdate => {
             #[cfg(feature = "bot")]
