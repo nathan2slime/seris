@@ -93,7 +93,6 @@ Seris reads application settings from TOML, with environment fallbacks for secre
 Build flags:
 
 * `bot` - Discord bot functionality
-* `cli` - admin CLI tools
 
 Environment variable fallbacks are also supported for secrets:
 
@@ -138,7 +137,7 @@ See also:
 * If the bot exits immediately, confirm `discord_token` and `nasa_api_key` are set in the config file or environment.
 * If `/ready` keeps returning `503`, the Discord client has not connected yet or lost its shard connection.
 * If Docker reports an unhealthy container, confirm port `8080` is exposed and no other process is binding it.
-* If CLI commands ask for `sudo`, that is expected for service and config operations that modify system paths.
+* If the binary cannot find its config, confirm `SERIS_CONFIG_FILE` is set or that `~/.config/seris/config.toml` exists.
 
 ---
 
@@ -162,24 +161,6 @@ Seris shows a small terminal dashboard alongside the bot runtime.
 * `/health` - liveness check on port `8080`
 * `/ready` - Discord readiness check on port `8080`
 
-## 🧰 Admin CLI
-
-The installed `seris` binary also provides a small Linux admin CLI.
-
-Examples:
-
-```bash
-seris version
-seris config path
-seris config edit
-seris service status
-seris service restart
-seris service logs --follow
-seris self-update v1.0.1
-```
-
-Commands that touch the installed config file or the `systemd` service will prompt for `sudo` automatically when needed.
-
 ## 📦 GitHub Release Assets
 
 When a GitHub Release is published, `.github/workflows/release-assets.yml` builds and uploads a raw Linux binary plus a bundled Linux installer.
@@ -194,39 +175,32 @@ Included assets:
 Bundle contents:
 
 * `seris`
-* `install-local.sh`
 * `config.example.toml`
 * `README.md`
 
 ## 🛠️ Automatic Installers
 
-The Linux bootstrap installer downloads the Linux bundle, installs the runtime into `/opt/seris`, exposes a `seris` command that targets the service config, creates a `systemd` service, and enables it on boot.
-The service user stores its config in `/home/seris/.config/seris/config.toml`.
+The Linux bootstrap installer downloads the Linux bundle, installs `seris` into `~/.local/bin`, and wires the config path through `SERIS_CONFIG_FILE` in `~/.bashrc`.
+The default config file lives at `~/.config/seris/config.toml`.
 
 ```bash
-curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sh
 ```
 
 Optional version override:
 
 ```bash
-curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh -s -- <tag>
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sh -s -- <tag>
 ```
 
-To use the installed CLI from Bash, add the install directory to your `PATH`:
+The installer adds these lines to `~/.bashrc` if they are missing:
 
 ```bash
-echo 'export PATH="$PATH:/opt/seris"' >> ~/.bashrc
-source ~/.bashrc
+export PATH="$HOME/.local/bin:$PATH"
+export SERIS_CONFIG_FILE="$HOME/.config/seris/config.toml"
 ```
 
-This exposes the `seris` binary at `/opt/seris/seris`.
-
-### Local bundle installers
-
-If you prefer extracting a release bundle manually, run the bundled local installer instead:
-
-* Linux: `sudo ./install-local.sh`
+Source `~/.bashrc` or open a new shell after installation.
 
 ---
 

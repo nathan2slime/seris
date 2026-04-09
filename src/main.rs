@@ -23,44 +23,19 @@ use serenity::all::{ClientBuilder, GatewayIntents, ShardManager};
 async fn main() {
     env_logger::init();
 
-    let run_bot = {
-        #[cfg(feature = "cli")]
-        {
-            match seris::cli::dispatch() {
-                Ok(seris::cli::CliAction::RunBot) => true,
-                Ok(seris::cli::CliAction::Exit(code)) => {
-                    log::logger().flush();
-                    std::process::exit(code);
-                }
-                Err(message) => {
-                    log::error!("{message}");
-                    log::logger().flush();
-                    std::process::exit(1);
-                }
-            }
-        }
-
-        #[cfg(not(feature = "cli"))]
-        {
-            true
-        }
-    };
-
-    if run_bot {
-        #[cfg(feature = "bot")]
-        {
-            if let Err(err) = run().await {
-                log::error!("{err}");
-                log::logger().flush();
-                std::process::exit(1);
-            }
-        }
-
-        #[cfg(not(feature = "bot"))]
-        {
-            log::warn!("bot feature is disabled");
+    #[cfg(feature = "bot")]
+    {
+        if let Err(err) = run().await {
+            log::error!("{err}");
             log::logger().flush();
+            std::process::exit(1);
         }
+    }
+
+    #[cfg(not(feature = "bot"))]
+    {
+        log::warn!("bot feature is disabled");
+        log::logger().flush();
     }
 }
 

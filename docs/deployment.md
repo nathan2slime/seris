@@ -9,18 +9,16 @@ docker run -it --env-file .env -p 8080:8080 seris
 
 The container exposes port `8080` for `/health` and `/ready`, and the TUI is shown when a terminal is attached.
 
-## systemd
+## Local install
 
-Install the release bundle or binary, then manage it with the CLI:
+Install the release bundle, then run the binary from your user bin directory:
 
 ```bash
-seris service status
-seris service restart
-seris service logs --follow
+seris
 ```
 
-The bundled installer places files under `/opt/seris`, installs a `seris` command wired to the service config, and configures a `systemd` service.
-The service config lives at `/home/seris/.config/seris/config.toml`.
+The bundled installer places `seris` in `~/.local/bin` and sets `SERIS_CONFIG_FILE` in `~/.bashrc`.
+The default config file lives at `~/.config/seris/config.toml`.
 
 ## GitHub Releases
 

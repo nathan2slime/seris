@@ -79,17 +79,15 @@ jobs:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           set -eux
-          ASSET_PREFIX="${APP_NAME}-${VERSION}-${TARGET}"
-          PACKAGE_DIR="pkg/${ASSET_PREFIX}"
-          mkdir -p "${PACKAGE_DIR}" dist
-          cp "target/${TARGET}/release/${APP_NAME}" "dist/${ASSET_PREFIX}"
-          cp "target/${TARGET}/release/${APP_NAME}" "${PACKAGE_DIR}/"
-          cp install-local.sh "${PACKAGE_DIR}/"
-          cp README.md "${PACKAGE_DIR}/"
-          cp config.example.toml "${PACKAGE_DIR}/"
-          chmod +x "${PACKAGE_DIR}/install-local.sh"
-          sed "s/__SERIS_DEFAULT_VERSION__/${VERSION}/g" install.sh > dist/install.sh
-          chmod +x dist/install.sh
+           ASSET_PREFIX="${APP_NAME}-${VERSION}-${TARGET}"
+           PACKAGE_DIR="pkg/${ASSET_PREFIX}"
+           mkdir -p "${PACKAGE_DIR}" dist
+           cp "target/${TARGET}/release/${APP_NAME}" "dist/${ASSET_PREFIX}"
+           cp "target/${TARGET}/release/${APP_NAME}" "${PACKAGE_DIR}/"
+           cp README.md "${PACKAGE_DIR}/"
+           cp config.example.toml "${PACKAGE_DIR}/"
+           sed "s/__SERIS_DEFAULT_VERSION__/${VERSION}/g" install.sh > dist/install.sh
+           chmod +x dist/install.sh
           tar -C pkg -czf "dist/${ASSET_PREFIX}.tar.gz" "${ASSET_PREFIX}"
           sha256sum "dist/${ASSET_PREFIX}" > "dist/${ASSET_PREFIX}.sha256"
           sha256sum "dist/${ASSET_PREFIX}.tar.gz" > "dist/${ASSET_PREFIX}.tar.gz.sha256"

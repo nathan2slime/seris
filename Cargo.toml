@@ -4,9 +4,8 @@ name = "seris"
 version = "0.1.0"
 
 [features]
-default = ["bot", "cli"]
+default = ["bot"]
 bot = []
-cli = []
 
 [dependencies]
 chrono = "0.4.39"

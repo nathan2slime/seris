@@ -10,7 +10,7 @@ This roadmap outlines planned improvements for the Seris Discord bot, prioritize
 
 **Strengths:**
 - Clean modular architecture (commands/embeds/services)
-- Comprehensive deployment options (Docker, systemd, GitHub releases)
+- Comprehensive deployment options (Docker, local install, GitHub releases)
 - Modern Rust 2021 edition with minimal attack surface
 
 **Key Areas for Improvement:**
