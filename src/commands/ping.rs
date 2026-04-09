@@ -1,7 +1,10 @@
 use crate::types::{Context, Error};
 
-/// Replies with a friendly Pong.
-#[poise::command(slash_command, description_localized("pt-BR", "Responde com Pong!"))]
+/// Replies with a gentle Pong.
+#[poise::command(
+    slash_command,
+    description_localized("pt-BR", "Responde baixinho com Pong")
+)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     ctx.data()
         .database
@@ -9,8 +12,7 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 
     let author = ctx.author();
 
-    ctx.say(format!("Yay!, <@{}>! 🐾✨ Pong! 🎉", author.id))
-        .await?;
+    ctx.say(format!("P-pong... <@{}>! 🐾✨", author.id)).await?;
 
     Ok(())
 }

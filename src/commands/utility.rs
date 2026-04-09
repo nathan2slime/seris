@@ -14,7 +14,7 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
 
     let version = env!("CARGO_PKG_VERSION");
     let message = format!(
-        "Seris v{version}\nSlash commands: ping, clear, apod, anime, manga, about, uptime, stats"
+        "S-sou a Seris v{version}\nConheço estes comandos: ping, clear, apod, anime, manga, about, uptime, stats"
     );
 
     ctx.say(message).await?;
@@ -32,7 +32,7 @@ pub async fn uptime(ctx: Context<'_>) -> Result<(), Error> {
         .record_command_usage_best_effort(ctx.author().id, "uptime");
 
     let uptime = ctx.data().started_at.elapsed();
-    let message = format!("Seris está ativa há {}", format_duration(uptime));
+    let message = format!("Estou ativa há {}...", format_duration(uptime));
 
     ctx.say(message).await?;
     Ok(())
@@ -48,7 +48,7 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
         Ok(summary) => summary,
         Err(err) => {
             log::error!("failed to load persisted stats: {err}");
-            ctx.say("Não consegui ler suas estatísticas persistidas agora.")
+            ctx.say("E-eu não consegui ler suas estatísticas agora.")
                 .await?;
             return Ok(());
         }
@@ -60,14 +60,14 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
 
     let message = if let Some(favorite_command) = summary.favorite_command {
         format!(
-            "Persistência ativa. Você usou {total} comandos em {distinct} comandos diferentes. Favorito: `/{favorite}` ({count} vezes).",
+            "Pelo que vi, você usou {total} comandos em {distinct} comandos diferentes. Favorito: `/{favorite}` ({count} vezes)...",
             total = summary.total_uses,
             distinct = summary.distinct_commands,
             favorite = favorite_command,
             count = summary.favorite_count,
         )
     } else {
-        "Persistência ativa, mas ainda não há comandos salvos para você.".to_string()
+        "Ainda não tenho comandos salvos para você...".to_string()
     };
 
     ctx.say(message).await?;

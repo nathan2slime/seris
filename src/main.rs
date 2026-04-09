@@ -1,5 +1,6 @@
 use env_logger::Env;
 use log::{error, info, warn};
+use seris::cli::{parse, Command as CliCommand};
 #[cfg(feature = "bot")]
 use seris::commands::commands;
 #[cfg(feature = "bot")]
@@ -24,6 +25,37 @@ async fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
         .format_timestamp_secs()
         .init();
+    match parse(std::env::args().skip(1)) {
+        CliCommand::SelfUpdate => {
+            #[cfg(feature = "bot")]
+            {
+                if let Err(err) = seris::update::run_self_update().await {
+                    error!("self-update failed: {err}");
+                    log::logger().flush();
+                    std::process::exit(1);
+                }
+
+                log::logger().flush();
+                return;
+            }
+
+            #[cfg(not(feature = "bot"))]
+            {
+                error!("self-update is unavailable in this build");
+                log::logger().flush();
+                std::process::exit(1);
+            }
+        }
+        CliCommand::Help => {
+            println!("{}", seris::cli::usage());
+            return;
+        }
+        CliCommand::Unknown(command) => {
+            eprintln!("Unknown command: {command}\n\n{}", seris::cli::usage());
+            std::process::exit(2);
+        }
+        CliCommand::RunBot => {}
+    }
 
     #[cfg(feature = "bot")]
     {

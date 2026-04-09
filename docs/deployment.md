@@ -19,6 +19,7 @@ seris
 
 The bundled installer places `seris` in `~/.local/bin` and sets `SERIS_CONFIG_FILE` in `~/.bashrc`.
 The default config file lives at `~/.config/seris/config.toml`.
+You can update an installed release with `seris self-update` on Linux x86_64.
 
 ## GitHub Releases
 

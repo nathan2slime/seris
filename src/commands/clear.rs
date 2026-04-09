@@ -7,12 +7,14 @@ use crate::types::{Context, Error};
 /// Deletes recent messages in a guild channel for the owner.
 #[poise::command(
     slash_command,
-    description_localized("pt-BR", "Limpa mensagens no canal")
+    description_localized("pt-BR", "Limpa mensagens do canal, se puder")
 )]
 pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
     ctx.data()
         .database
         .record_command_usage_best_effort(ctx.author().id, "clear");
+
+    ctx.defer().await?;
 
     let channel = ctx.channel_id();
     let author = ctx.author();
@@ -48,23 +50,23 @@ pub async fn clear(ctx: Context<'_>) -> Result<(), Error> {
                     channel.delete_messages(&ctx, message_ids).await?;
 
                     ctx.say(format!(
-                        "Houve uma limpeza de mensagens — <t:{}>.",
+                        "P-pronto... limpei as mensagens — <t:{}>.",
                         Utc::now().timestamp()
                     ))
                     .await?;
                 } else {
-                    ctx.say("Sinto muito. Só o dono do servidor pode apagar mensagens")
+                    ctx.say("D-desculpe... só o dono do servidor pode apagar mensagens")
                         .await?;
                 }
             }
             Err(err) => {
                 log::error!("failed to fetch guild {guild_id}: {err}");
-                ctx.say("Sinto muito. Não consegui confirmar as permissões do servidor")
+                ctx.say("D-desculpe... não consegui confirmar as permissões do servidor")
                     .await?;
             }
         };
     } else {
-        ctx.say("Sinto muito — isso só pode ser executado em um servidor")
+        ctx.say("D-desculpe... isso só pode ser executado em um servidor")
             .await?;
     }
 
