@@ -4,10 +4,10 @@
 
 ```bash
 docker build -t seris .
-docker run -it --env-file .env -p 8080:8080 seris
+docker run -it --env-file .env seris
 ```
 
-The container exposes port `8080` for `/health` and `/ready`, and the bot writes standard logs to stdout/stderr.
+The bot writes standard logs to stdout/stderr and does not expose an HTTP health endpoint.
 
 ## Local install
 
@@ -42,9 +42,8 @@ Required values:
 
 ## Recommendations
 
-* Run the container or service with the health endpoint reachable.
+* Watch the logs for startup and Discord connection issues.
 * Keep the config file out of the image when using external secrets.
-* Monitor `/ready` rather than just process liveness.
 * Set `RUST_LOG=info` (or more specific filters) if you want more verbose runtime logs.
 * Persisted command stats are stored in the SQLite file, defaulting to `~/.local/share/seris/seris.sqlite3`.
 * SQLite connections are pooled internally to reduce contention under load.
