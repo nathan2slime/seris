@@ -24,7 +24,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Benchmark helpers for critical paths
 * Minimal Docker footprint
 * Fast startup, low memory usage
-* Lightweight admin TUI dashboard
+* Standard runtime logs for bot lifecycle and errors
 
 ---
 
@@ -39,7 +39,7 @@ All commands are **slash commands** (`/`).
    `/clear` — Removes messages (restricted permissions).
 
 3. **NASA – Astronomy Picture of the Day**
-   `/nasa apod` — Displays NASA’s daily image.
+   `/nasa apod` — Displays NASA’s daily image or video.
 
 4. **Random Anime**
    `/anime random` — Suggests an anime title.
@@ -151,15 +151,13 @@ Platform-specific deployment notes live in `docs/deployment.md`.
 cargo run --release
 ```
 
-The TUI dashboard opens in the terminal when Seris runs interactively.
+Seris prints standard logs to the terminal by default. Use `RUST_LOG` to adjust verbosity.
 
-## 🖥️ Admin Dashboard
+## 🖥️ Runtime Signals
 
-Seris shows a small terminal dashboard alongside the bot runtime.
-
-* `q` or `Ctrl-C` closes the dashboard
 * `/health` - liveness check on port `8080`
 * `/ready` - Discord readiness check on port `8080`
+* Logs include startup, connection, shutdown, and command failure events
 
 ## 📦 GitHub Release Assets
 
@@ -230,7 +228,7 @@ docker run -it --env-file .env -p 8080:8080 seris
 * Static binary
 * No shell, no package manager
 * Runs as non-root
-* Shows the TUI only when attached to a terminal
+* Prints logs to stdout/stderr
 
 ---
 

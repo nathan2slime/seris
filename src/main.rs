@@ -1,9 +1,9 @@
+use env_logger::Env;
+use log::{error, info, warn};
 #[cfg(feature = "bot")]
 use seris::commands::commands;
 #[cfg(feature = "bot")]
 use seris::config::load_config;
-#[cfg(feature = "bot")]
-use seris::dashboard::DashboardState;
 #[cfg(feature = "bot")]
 use seris::database::Database;
 #[cfg(feature = "bot")]
@@ -21,12 +21,14 @@ use serenity::all::{ClientBuilder, GatewayIntents, ShardManager};
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info"))
+        .format_timestamp_secs()
+        .init();
 
     #[cfg(feature = "bot")]
     {
         if let Err(err) = run().await {
-            log::error!("{err}");
+            error!("bot exited with error: {err}");
             log::logger().flush();
             std::process::exit(1);
         }
@@ -34,35 +36,28 @@ async fn main() {
 
     #[cfg(not(feature = "bot"))]
     {
-        log::warn!("bot feature is disabled");
+        warn!("bot feature is disabled");
         log::logger().flush();
     }
 }
 
 #[cfg(feature = "bot")]
 async fn run() -> Result<(), Error> {
+    info!("starting Seris");
     let config = load_config()?;
+    info!("configuration loaded");
     let intents = GatewayIntents::non_privileged();
     let discord_token = config.discord_token.clone();
     let database = Arc::new(Database::open_default()?);
-    let dashboard = Arc::new(DashboardState::new());
+    info!("database ready");
     let started_at = Instant::now();
     let health = Arc::new(HealthState::new());
-
-    let dashboard_task = tokio::task::spawn_blocking({
-        let dashboard = Arc::clone(&dashboard);
-        move || {
-            if let Err(err) = seris::dashboard::start(dashboard) {
-                log::error!("dashboard TUI failed: {err}");
-            }
-        }
-    });
 
     tokio::spawn({
         let health = Arc::clone(&health);
         async move {
             if let Err(err) = seris::health::start(health).await {
-                log::error!("health server failed: {err}");
+                error!("health server failed: {err}");
             }
         }
     });
@@ -85,13 +80,11 @@ async fn run() -> Result<(), Error> {
         .build();
 
     let mut client = ClientBuilder::new(discord_token, intents)
-        .event_handler(seris::utils::Handler::new(
-            Arc::clone(&dashboard),
-            Arc::clone(&health),
-        ))
+        .event_handler(seris::utils::Handler::new(Arc::clone(&health)))
         .framework(framework)
         .await?;
 
+    info!("discord client configured; connecting");
     let shard_manager = client.shard_manager.clone();
 
     let run_result = tokio::select! {
@@ -100,19 +93,12 @@ async fn run() -> Result<(), Error> {
             Ok(())
         }
         _ = tokio::signal::ctrl_c() => {
-            dashboard.request_exit();
-            graceful_shutdown(shard_manager).await;
-            Ok(())
-        }
-        _ = wait_for_dashboard_exit(Arc::clone(&dashboard)) => {
-            log::info!("dashboard requested shutdown");
+            info!("shutdown requested via Ctrl-C");
             graceful_shutdown(shard_manager).await;
             Ok(())
         }
     };
 
-    dashboard.request_exit();
-    let _ = dashboard_task.await;
     log::logger().flush();
 
     run_result
@@ -121,14 +107,7 @@ async fn run() -> Result<(), Error> {
 #[cfg(feature = "bot")]
 async fn graceful_shutdown(shard_manager: Arc<ShardManager>) {
     match tokio::time::timeout(Duration::from_secs(5), shard_manager.shutdown_all()).await {
-        Ok(()) => log::info!("discord client shut down cleanly"),
-        Err(_) => log::warn!("timed out waiting for discord shutdown"),
-    }
-}
-
-#[cfg(feature = "bot")]
-async fn wait_for_dashboard_exit(state: Arc<DashboardState>) {
-    while !state.should_exit() {
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        Ok(()) => info!("discord client shut down cleanly"),
+        Err(_) => warn!("timed out waiting for discord shutdown"),
     }
 }
