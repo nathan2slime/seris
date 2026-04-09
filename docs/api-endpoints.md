@@ -12,7 +12,6 @@ Seris uses a small set of HTTP endpoints:
 
 * `GET /health` on port `8080` returns `200 OK` when the process is alive.
 * `GET /ready` on port `8080` returns `200 OK` when Discord is connected and `503` otherwise.
-* The terminal dashboard is not HTTP-based.
 
 ## Notes
 

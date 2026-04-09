@@ -53,7 +53,7 @@ async fn fetches_manga_from_mock_server() {
 #[tokio::test]
 async fn fetches_apod_from_mock_server() {
     let server = spawn_json_server(
-        r#"{"title":"APOD","explanation":"Space","hdurl":"https://example.com/apod.jpg"}"#,
+        r#"{"title":"APOD","explanation":"Space","media_type":"image","url":"https://example.com/apod.jpg","hdurl":"https://example.com/apod.jpg"}"#,
     )
     .await;
 
@@ -63,11 +63,32 @@ async fn fetches_apod_from_mock_server() {
 
     assert_eq!(response.title, "APOD");
     assert_eq!(response.explanation, "Space");
-    assert_eq!(response.hdurl, "https://example.com/apod.jpg");
+    assert_eq!(response.media_type, "image");
+    assert_eq!(response.url, "https://example.com/apod.jpg");
+    assert_eq!(
+        response.hdurl.as_deref(),
+        Some("https://example.com/apod.jpg")
+    );
     assert_eq!(
         server.request_line().await.as_deref(),
         Some("GET /?api_key=abc123 HTTP/1.1")
     );
+}
+
+#[tokio::test]
+async fn fetches_video_apod_from_mock_server() {
+    let server = spawn_json_server(
+        r#"{"title":"APOD","explanation":"Space","media_type":"video","url":"https://example.com/apod.mp4"}"#,
+    )
+    .await;
+
+    let response = get_astronomy_picture_day_from(&server.url, "abc123".to_string())
+        .await
+        .expect("apod response");
+
+    assert_eq!(response.media_type, "video");
+    assert_eq!(response.url, "https://example.com/apod.mp4");
+    assert_eq!(response.hdurl, None);
 }
 
 #[tokio::test]

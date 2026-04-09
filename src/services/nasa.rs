@@ -72,10 +72,26 @@ async fn get_astronomy_picture_day_cached_from(
 pub struct AstronomyPictureDay {
     /// APOD explanation text.
     pub explanation: String,
-    /// High-resolution image URL.
-    pub hdurl: String,
+    /// Whether the APOD is an image or video.
+    pub media_type: String,
     /// APOD title.
     pub title: String,
+    /// Canonical media URL.
+    pub url: String,
+    /// High-resolution image URL, when the APOD is an image.
+    pub hdurl: Option<String>,
+}
+
+impl AstronomyPictureDay {
+    /// Returns whether this APOD entry is a video.
+    pub fn is_video(&self) -> bool {
+        self.media_type == "video"
+    }
+
+    /// Returns the best image URL available for this APOD entry.
+    pub fn image_url(&self) -> &str {
+        self.hdurl.as_deref().unwrap_or(&self.url)
+    }
 }
 
 /// Fetches NASA's astronomy picture of the day.
@@ -117,7 +133,7 @@ mod tests {
     #[tokio::test]
     async fn parses_apod_response() {
         let server = spawn_json_server(
-            r#"{"title":"APOD","explanation":"Space","hdurl":"https://example.com/apod.jpg"}"#,
+            r#"{"title":"APOD","explanation":"Space","media_type":"image","url":"https://example.com/apod.jpg","hdurl":"https://example.com/apod.jpg"}"#,
         )
         .await;
 
@@ -127,7 +143,12 @@ mod tests {
 
         assert_eq!(response.title, "APOD");
         assert_eq!(response.explanation, "Space");
-        assert_eq!(response.hdurl, "https://example.com/apod.jpg");
+        assert_eq!(response.media_type, "image");
+        assert_eq!(response.url, "https://example.com/apod.jpg");
+        assert_eq!(
+            response.hdurl.as_deref(),
+            Some("https://example.com/apod.jpg")
+        );
         assert_eq!(
             server.request_line().await.as_deref(),
             Some("GET /?api_key=abc123 HTTP/1.1")
@@ -138,7 +159,7 @@ mod tests {
     async fn caches_apod_response_for_the_same_day() {
         let server = spawn_scripted_server(vec![TestResponse::new(
             200,
-            r#"{"title":"Cached","explanation":"Space","hdurl":"https://example.com/cached.jpg"}"#,
+            r#"{"title":"Cached","explanation":"Space","media_type":"image","url":"https://example.com/cached.jpg","hdurl":"https://example.com/cached.jpg"}"#,
         )])
         .await;
 
