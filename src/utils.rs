@@ -7,6 +7,7 @@ use serenity::{
 };
 
 /// Event handler used by the bot client.
+#[derive(Default)]
 pub struct Handler;
 
 impl Handler {
