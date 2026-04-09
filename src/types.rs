@@ -64,6 +64,13 @@ pub enum SerisError {
         /// Why the value was rejected.
         reason: &'static str,
     },
+
+    /// Errors that happen while self-updating the binary.
+    #[error("{message}")]
+    Update {
+        /// Human-readable update failure.
+        message: String,
+    },
 }
 
 /// Shared data made available to command handlers.

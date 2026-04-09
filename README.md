@@ -152,6 +152,7 @@ cargo run --release
 ```
 
 Seris prints standard logs to the terminal by default. Use `RUST_LOG` to adjust verbosity.
+To update an installed binary, run `seris self-update` on Linux x86_64.
 
 ## 🖥️ Runtime Signals
 
