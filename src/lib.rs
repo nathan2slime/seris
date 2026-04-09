@@ -10,8 +10,6 @@ pub mod database;
 #[cfg(feature = "bot")]
 pub mod embeds;
 #[cfg(feature = "bot")]
-pub mod health;
-#[cfg(feature = "bot")]
 pub mod plugins;
 #[cfg(feature = "bot")]
 pub mod services;

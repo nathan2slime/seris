@@ -102,9 +102,7 @@ Environment variable fallbacks are also supported for secrets:
 
 Monitoring:
 
-* `GET /health` on port `8080` returns `200` when the process is up.
-* `GET /ready` returns `200` after Discord is connected and `503` otherwise.
-* The Docker image includes a `HEALTHCHECK` against `/ready`.
+* Seris uses logs and Discord gateway state instead of an HTTP health server.
 
 ---
 
@@ -118,9 +116,6 @@ flowchart LR
   Commands --> Services[API clients]
   Services --> Jikan[Jikan random anime/manga]
   Services --> NASA[NASA APOD]
-  Handler --> Health[Health state]
-  Health --> HealthHTTP[HTTP /health and /ready]
-  HealthHTTP --> Docker[Docker healthcheck]
 ```
 
 The bot keeps the command layer thin: commands call services, services fetch API data, and embeds format the response for Discord. SQLite uses a small connection pool so reads and writes do not serialize on a single handle.
@@ -135,8 +130,7 @@ See also:
 ## 🛟 Troubleshooting
 
 * If the bot exits immediately, confirm `discord_token` and `nasa_api_key` are set in the config file or environment.
-* If `/ready` keeps returning `503`, the Discord client has not connected yet or lost its shard connection.
-* If Docker reports an unhealthy container, confirm port `8080` is exposed and no other process is binding it.
+* If startup seems stuck, check the logs for Discord authentication or network failures.
 * If the binary cannot find its config, confirm `SERIS_CONFIG_FILE` is set or that `~/.config/seris/config.toml` exists.
 
 ---
@@ -156,8 +150,6 @@ To update an installed binary, run `seris self-update` on Linux x86_64.
 
 ## 🖥️ Runtime Signals
 
-* `/health` - liveness check on port `8080`
-* `/ready` - Discord readiness check on port `8080`
 * Logs include startup, connection, shutdown, and command failure events
 
 ## 📦 GitHub Release Assets
@@ -205,7 +197,7 @@ Source `~/.bashrc` or open a new shell after installation.
 
 ## 📚 API Endpoints
 
-The external and internal endpoints used by Seris are documented in `docs/api-endpoints.md`.
+The external endpoints used by Seris are documented in `docs/api-endpoints.md`.
 
 ---
 
@@ -222,7 +214,7 @@ docker build -t seris .
 ### Run
 
 ```bash
-docker run -it --env-file .env -p 8080:8080 seris
+docker run -it --env-file .env seris
 ```
 
 * Image size: **~4–6 MB**

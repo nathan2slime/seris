@@ -7,8 +7,6 @@ use seris::commands::commands;
 use seris::config::load_config;
 #[cfg(feature = "bot")]
 use seris::database::Database;
-#[cfg(feature = "bot")]
-use seris::health::HealthState;
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -83,16 +81,6 @@ async fn run() -> Result<(), Error> {
     let database = Arc::new(Database::open_default()?);
     info!("database ready");
     let started_at = Instant::now();
-    let health = Arc::new(HealthState::new());
-
-    tokio::spawn({
-        let health = Arc::clone(&health);
-        async move {
-            if let Err(err) = seris::health::start(health).await {
-                error!("health server failed: {err}");
-            }
-        }
-    });
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -112,7 +100,7 @@ async fn run() -> Result<(), Error> {
         .build();
 
     let mut client = ClientBuilder::new(discord_token, intents)
-        .event_handler(seris::utils::Handler::new(Arc::clone(&health)))
+        .event_handler(seris::utils::Handler::new())
         .framework(framework)
         .await?;
 

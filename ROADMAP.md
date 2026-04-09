@@ -206,12 +206,8 @@ This roadmap outlines planned improvements for the Seris Discord bot, prioritize
 ### 4.2 Health Checks & Monitoring
 **Goal:** Observability for production deployments
 
-- [ ] Implement HTTP health check endpoint (Docker port 8080)
-  - `/health` - basic liveness
-  - `/ready` - Discord connection status
 - [ ] Add metrics collection (optional: `prometheus`)
-- [ ] Add Docker healthcheck configuration
-- [ ] Document monitoring recommendations
+- [ ] Document logging and monitoring recommendations
 
 **Estimated Effort:** 1-2 days  
 **Impact:** ⭐⭐⭐
