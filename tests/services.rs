@@ -1,6 +1,7 @@
 mod common;
 
 use common::spawn_json_server;
+use seris::services::epic::get_epic_images_from;
 use seris::services::jikan::{get_random_anime_from, get_random_manga_from};
 use seris::services::nasa::get_astronomy_picture_day_from;
 
@@ -72,6 +73,31 @@ async fn fetches_apod_from_mock_server() {
     assert_eq!(
         server.request_line().await.as_deref(),
         Some("GET /?api_key=abc123 HTTP/1.1")
+    );
+}
+
+#[tokio::test]
+async fn fetches_epic_from_mock_server() {
+    let server = spawn_json_server(
+        r#"[{"image":"epic_1b_20260409011359","caption":"Earth","date":"2026-04-09 01:13:59"}]"#,
+    )
+    .await;
+
+    let response = get_epic_images_from(&server.url, "abc123".to_string(), "natural", None)
+        .await
+        .expect("epic response");
+
+    assert_eq!(response.len(), 1);
+    assert_eq!(response[0].image, "epic_1b_20260409011359");
+    assert_eq!(response[0].caption, "Earth");
+    assert_eq!(response[0].short_date(), "2026-04-09");
+    assert_eq!(
+        response[0].url,
+        "https://api.nasa.gov/EPIC/archive/natural/2026/04/09/png/epic_1b_20260409011359.png?api_key=abc123"
+    );
+    assert_eq!(
+        server.request_line().await.as_deref(),
+        Some("GET /api/natural/images?api_key=abc123 HTTP/1.1")
     );
 }
 

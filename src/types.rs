@@ -1,6 +1,7 @@
 //! Shared application state and error types.
 
 use crate::config::AppConfig;
+use dashmap::DashMap;
 use reqwest::StatusCode;
 use std::sync::Arc;
 use std::time::Instant;
@@ -79,6 +80,8 @@ pub struct Data {
     pub config: AppConfig,
     /// SQLite-backed persistence.
     pub database: Arc<crate::database::Database>,
+    /// Active EPIC gallery sessions keyed by Discord message id.
+    pub epic_sessions: Arc<DashMap<u64, crate::epic::EpicSession>>,
     /// When the process started.
     pub started_at: Instant,
 }
