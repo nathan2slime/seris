@@ -10,6 +10,8 @@ pub mod database;
 #[cfg(feature = "bot")]
 pub mod embeds;
 #[cfg(feature = "bot")]
+pub mod epic;
+#[cfg(feature = "bot")]
 pub mod plugins;
 #[cfg(feature = "bot")]
 pub mod services;

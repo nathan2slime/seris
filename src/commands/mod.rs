@@ -6,6 +6,7 @@ use poise::Command;
 
 pub mod anime;
 pub mod clear;
+pub mod epic;
 pub mod manga;
 pub mod nasa;
 pub mod ping;
@@ -30,6 +31,7 @@ mod tests {
             vec![
                 "ping",
                 "clear",
+                "epic",
                 "apod",
                 "get_random_anime",
                 "get_random_manga",

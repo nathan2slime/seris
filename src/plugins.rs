@@ -1,7 +1,7 @@
 //! Lightweight internal plugin registry for command groups.
 
 use crate::{
-    commands::{anime, clear, manga, nasa, ping, utility},
+    commands::{anime, clear, epic, manga, nasa, ping, utility},
     types::{Data, Error},
 };
 use poise::Command;
@@ -72,7 +72,7 @@ impl Plugin for ContentPlugin {
     }
 
     fn commands(&self) -> Vec<Command<Data, Error>> {
-        vec![nasa::apod(), anime::random(), manga::random()]
+        vec![epic::epic(), nasa::apod(), anime::random(), manga::random()]
     }
 }
 

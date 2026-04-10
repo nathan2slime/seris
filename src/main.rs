@@ -1,3 +1,4 @@
+use dashmap::DashMap;
 use env_logger::Env;
 use log::{error, info, warn};
 use seris::cli::{parse, Command as CliCommand};
@@ -81,10 +82,12 @@ async fn run() -> Result<(), Error> {
     let database = Arc::new(Database::open_default()?);
     info!("database ready");
     let started_at = Instant::now();
+    let epic_sessions = Arc::new(DashMap::new());
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: commands(),
+            event_handler: seris::epic::framework_event_handler,
             ..Default::default()
         })
         .setup(move |ctx, _ready, framework| {
@@ -93,6 +96,7 @@ async fn run() -> Result<(), Error> {
                 Ok(Data {
                     config,
                     database: Arc::clone(&database),
+                    epic_sessions: Arc::clone(&epic_sessions),
                     started_at,
                 })
             })

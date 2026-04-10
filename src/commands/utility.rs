@@ -14,7 +14,7 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
 
     let version = env!("CARGO_PKG_VERSION");
     let message = format!(
-        "S-sou a Seris v{version}\nConheço estes comandos: ping, clear, apod, anime, manga, about, uptime, stats"
+        "S-sou a Seris v{version}\nConheço estes comandos: ping, clear, epic, apod, anime, manga, about, uptime, stats"
     );
 
     ctx.say(message).await?;
