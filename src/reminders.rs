@@ -2,11 +2,11 @@
 
 use chrono::{
     DateTime, Duration as ChronoDuration, Local, LocalResult, NaiveDateTime, NaiveTime, TimeZone,
-    Timelike,
 };
 use log::{info, warn};
+use rand::seq::SliceRandom;
 use serenity::{
-    all::{CreateMessage, User},
+    all::{CreateEmbed, CreateMessage, User},
     http::Http,
 };
 use std::{sync::Arc, time::Duration};
@@ -75,22 +75,24 @@ async fn fetch_application_owner(http: &Http) -> serenity::Result<User> {
     Err(serenity::Error::Other("application owner is unavailable"))
 }
 
-async fn send_point_reminder(
+pub async fn send_point_reminder(
     http: &Http,
     owner: &User,
     target: DateTime<Local>,
 ) -> serenity::Result<()> {
-    let gif_url =
-        KAWAII_REMINDER_GIFS[(target.time().hour() as usize) % KAWAII_REMINDER_GIFS.len()];
+    let gif_url = KAWAII_REMINDER_GIFS
+        .choose(&mut rand::thread_rng())
+        .expect("reminder GIF list should not be empty");
 
     owner
         .direct_message(
             http,
-            CreateMessage::new().content(format!(
-                "Onii-chan, chegou a horinha de marcar o pontinho das {} kawaii~\nNao esquece, ta bom? Eu vou ficar felizinha quando voce marcar certinho.\n{}",
-                target.format("%H:%M"),
-                gif_url,
-            )),
+            CreateMessage::new()
+                .content(format!(
+                    "Onii-chan, chegou a horinha de bater o ponto das {}.\nNão esquece, tá bom? Vou ficar felizinha quando você marcar certinho.",
+                    target.format("%H:%M"),
+                ))
+                .embed(CreateEmbed::new().image(*gif_url)),
         )
         .await?;
 
