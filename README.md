@@ -22,6 +22,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Plugin-based command registry
 * SQLite-backed persistence with a connection pool
 * Benchmark helpers for critical paths
+* Automatic DM reminders for the application owner at 12:00, 13:05, and 17:53
 * Minimal Docker footprint
 * Fast startup, low memory usage
 * Standard runtime logs for bot lifecycle and errors

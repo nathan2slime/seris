@@ -14,6 +14,8 @@ pub mod epic;
 #[cfg(feature = "bot")]
 pub mod plugins;
 #[cfg(feature = "bot")]
+pub mod reminders;
+#[cfg(feature = "bot")]
 pub mod services;
 #[cfg(test)]
 mod test_utils;
