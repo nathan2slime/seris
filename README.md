@@ -19,6 +19,7 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Slash commands (Discord Interactions)
 * Clean permission boundaries
 * Predictable behavior
+* Automatic DM reminders for the application owner at 12:00, 13:05, and 17:53
 * Minimal Docker footprint
 * Fast startup, low memory usage
 

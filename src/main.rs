@@ -75,7 +75,7 @@ async fn run() -> Result<(), Error> {
         .build();
 
     let mut client = ClientBuilder::new(discord_token, intents)
-        .event_handler(seris::utils::Handler)
+        .event_handler(seris::utils::Handler::default())
         .framework(framework)
         .await?;
 
