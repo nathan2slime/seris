@@ -38,7 +38,7 @@ impl AppConfig {
     }
 }
 
-fn default_config_path() -> Option<PathBuf> {
+pub(crate) fn config_file_path() -> Option<PathBuf> {
     if let Ok(path) = env::var("SERIS_CONFIG_FILE") {
         return Some(PathBuf::from(path));
     }
@@ -61,7 +61,7 @@ fn default_config_path() -> Option<PathBuf> {
 
 /// Loads and validates the application configuration.
 pub fn load_config() -> Result<AppConfig, Error> {
-    let path = default_config_path().ok_or(SerisError::InvalidConfig {
+    let path = config_file_path().ok_or(SerisError::InvalidConfig {
         field: "config path",
         reason: "could not be determined",
     })?;
@@ -97,8 +97,7 @@ fn load_config_from_path_with_required(
 
 #[cfg(test)]
 mod tests {
-    use super::load_config_from_path;
-    use super::AppConfig;
+    use super::{config_file_path, load_config_from_path, AppConfig};
     use std::env;
     use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
@@ -145,5 +144,18 @@ mod tests {
 
         env::remove_var("SERIS_DISCORD_TOKEN");
         env::remove_var("SERIS_NASA_API_KEY");
+    }
+
+    #[test]
+    fn config_file_path_prefers_explicit_override() {
+        let dir = tempdir().expect("temp dir");
+        let config_path = dir.path().join("custom.toml");
+
+        let _guard = env_lock().lock().expect("env lock");
+        env::set_var("SERIS_CONFIG_FILE", &config_path);
+
+        assert_eq!(config_file_path(), Some(config_path.clone()));
+
+        env::remove_var("SERIS_CONFIG_FILE");
     }
 }

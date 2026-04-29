@@ -19,9 +19,13 @@ Seris is not flashy. She focuses on correctness, stability, and clean execution.
 * Slash commands (Discord Interactions)
 * Clean permission boundaries
 * Predictable behavior
+* Plugin-based command registry
+* SQLite-backed persistence with a connection pool
+* Benchmark helpers for critical paths
 * Automatic DM reminders for the application owner at 12:00, 13:05, and 17:53
 * Minimal Docker footprint
 * Fast startup, low memory usage
+* Standard runtime logs for bot lifecycle and errors
 
 ---
 
@@ -36,10 +40,25 @@ All commands are **slash commands** (`/`).
    `/clear` — Removes messages (restricted permissions).
 
 3. **NASA – Astronomy Picture of the Day**
-   `/nasa apod` — Displays NASA’s daily image.
+   `/nasa apod` — Displays NASA’s daily image or video.
 
 4. **Random Anime**
    `/anime random` — Suggests an anime title.
+
+5. **Utility Commands**
+   `/about` — Shows bot metadata.
+   `/uptime` — Shows process uptime.
+   `/stats` — Shows persisted command stats.
+
+## ⚡ Benchmarking
+
+Lightweight benchmark-style checks live as ignored tests, including memory sampling.
+
+Run them with:
+
+```bash
+cargo test --locked --all-features -- --ignored --nocapture
+```
 
 ---
 
@@ -75,14 +94,51 @@ Seris reads application settings from TOML, with environment fallbacks for secre
 Build flags:
 
 * `bot` - Discord bot functionality
-* `cli` - admin CLI tools
 
 Environment variable fallbacks are also supported for secrets:
 
 * `SERIS_DISCORD_TOKEN`
 * `SERIS_NASA_API_KEY`
+* `SERIS_DB_FILE`
+
+Monitoring:
+
+* Seris uses logs and Discord gateway state instead of an HTTP health server.
 
 ---
+
+## 🧱 Architecture
+
+```mermaid
+flowchart LR
+  Discord[Discord Gateway] --> Handler[Serenity event handler]
+  Handler --> Commands[Slash commands]
+  Commands --> Embeds[Embed builders]
+  Commands --> Services[API clients]
+  Services --> Jikan[Jikan random anime/manga]
+  Services --> NASA[NASA APOD]
+```
+
+The bot keeps the command layer thin: commands call services, services fetch API data, and embeds format the response for Discord. SQLite uses a small connection pool so reads and writes do not serialize on a single handle.
+
+See also:
+
+* `docs/architecture.md`
+* `docs/api-endpoints.md`
+
+---
+
+## 🛟 Troubleshooting
+
+* If the bot exits immediately, confirm `discord_token` and `nasa_api_key` are set in the config file or environment.
+* If startup seems stuck, check the logs for Discord authentication or network failures.
+* If the binary cannot find its config, confirm `SERIS_CONFIG_FILE` is set or that `~/.config/seris/config.toml` exists.
+
+---
+
+## 🚀 Deployment
+
+Platform-specific deployment notes live in `docs/deployment.md`.
 
 ## ▶️ Running Locally
 
@@ -90,23 +146,12 @@ Environment variable fallbacks are also supported for secrets:
 cargo run --release
 ```
 
-## 🧰 Admin CLI
+Seris prints standard logs to the terminal by default. Use `RUST_LOG` to adjust verbosity.
+To update an installed binary, run `seris self-update` on Linux x86_64.
 
-The installed `seris` binary also provides a small Linux admin CLI.
+## 🖥️ Runtime Signals
 
-Examples:
-
-```bash
-seris version
-seris config path
-seris config edit
-seris service status
-seris service restart
-seris service logs --follow
-seris self-update v1.0.1
-```
-
-Commands that touch the installed config file or the `systemd` service will prompt for `sudo` automatically when needed.
+* Logs include startup, connection, shutdown, and command failure events
 
 ## 📦 GitHub Release Assets
 
@@ -122,29 +167,39 @@ Included assets:
 Bundle contents:
 
 * `seris`
-* `install-local.sh`
 * `config.example.toml`
 * `README.md`
 
 ## 🛠️ Automatic Installers
 
-The Linux bootstrap installer downloads the Linux bundle, installs `seris` into `/opt/seris`, creates a `systemd` service, and enables it on boot.
+The Linux bootstrap installer downloads the Linux bundle, installs `seris` into `~/.local/bin`, and wires the config path through `SERIS_CONFIG_FILE` in `~/.bashrc`.
+The default config file lives at `~/.config/seris/config.toml`.
 
 ```bash
-curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sh
 ```
 
 Optional version override:
 
 ```bash
-curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sudo sh -s -- <tag>
+curl -fsSL https://github.com/nathan2slime/seris/releases/download/<tag>/install.sh | sh -s -- <tag>
 ```
 
-### Local bundle installers
+The installer adds these lines to `~/.bashrc` if they are missing:
 
-If you prefer extracting a release bundle manually, run the bundled local installer instead:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+export SERIS_CONFIG_FILE="$HOME/.config/seris/config.toml"
+```
 
-* Linux: `sudo ./install-local.sh`
+Source `~/.bashrc` or open a new shell after installation.
+
+---
+
+## 📚 API Endpoints
+
+The external endpoints used by Seris are documented in `docs/api-endpoints.md`.
+
 ---
 
 ## 🐳 Docker (Minimal Image)
@@ -160,13 +215,14 @@ docker build -t seris .
 ### Run
 
 ```bash
-docker run --env-file .env seris
+docker run -it --env-file .env seris
 ```
 
 * Image size: **~4–6 MB**
 * Static binary
 * No shell, no package manager
 * Runs as non-root
+* Prints logs to stdout/stderr
 
 ---
 

@@ -1,7 +1,10 @@
 //! Shared application state and error types.
 
 use crate::config::AppConfig;
+use dashmap::DashMap;
 use reqwest::StatusCode;
+use std::sync::Arc;
+use std::time::Instant;
 use thiserror::Error;
 
 /// Application-wide error type.
@@ -14,6 +17,18 @@ pub enum SerisError {
     /// Errors while performing HTTP requests.
     #[error(transparent)]
     Http(#[from] ::reqwest::Error),
+
+    /// Errors while interacting with SQLite persistence.
+    #[error(transparent)]
+    Sqlite(#[from] ::rusqlite::Error),
+
+    /// Errors from the SQLite connection pool.
+    #[error(transparent)]
+    Pool(#[from] ::r2d2::Error),
+
+    /// I/O errors from local runtime services.
+    #[error(transparent)]
+    Io(#[from] ::std::io::Error),
 
     /// HTTP request timed out.
     #[error("request to {service} timed out")]
@@ -50,12 +65,25 @@ pub enum SerisError {
         /// Why the value was rejected.
         reason: &'static str,
     },
+
+    /// Errors that happen while self-updating the binary.
+    #[error("{message}")]
+    Update {
+        /// Human-readable update failure.
+        message: String,
+    },
 }
 
 /// Shared data made available to command handlers.
 pub struct Data {
     /// Loaded application configuration.
     pub config: AppConfig,
+    /// SQLite-backed persistence.
+    pub database: Arc<crate::database::Database>,
+    /// Active EPIC gallery sessions keyed by Discord message id.
+    pub epic_sessions: Arc<DashMap<u64, crate::epic::EpicSession>>,
+    /// When the process started.
+    pub started_at: Instant,
 }
 
 /// Canonical error alias used by command handlers.

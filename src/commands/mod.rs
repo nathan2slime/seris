@@ -1,28 +1,26 @@
 //! Slash command registrations.
 
+use crate::plugins;
 use crate::types::{Data, Error};
 use poise::Command;
 
 pub mod anime;
 pub mod clear;
+pub mod epic;
 pub mod manga;
 pub mod nasa;
 pub mod ping;
+pub mod utility;
 
 /// Returns every registered Discord slash command.
 pub fn commands() -> Vec<Command<Data, Error>> {
-    vec![
-        ping::ping(),
-        clear::clear(),
-        nasa::apod(),
-        anime::random(),
-        manga::random(),
-    ]
+    plugins::registry().commands()
 }
 
 #[cfg(test)]
 mod tests {
     use super::commands;
+    use crate::plugins;
 
     #[test]
     fn registers_all_expected_commands() {
@@ -33,10 +31,33 @@ mod tests {
             vec![
                 "ping",
                 "clear",
+                "epic",
                 "apod",
                 "get_random_anime",
-                "get_random_manga"
+                "get_random_manga",
+                "about",
+                "uptime",
+                "stats"
             ]
         );
+    }
+
+    #[test]
+    fn registry_groups_commands_by_plugin() {
+        assert_eq!(
+            plugins::registry().names(),
+            vec!["core", "content", "utility"]
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn benchmarks_registry_flattening() {
+        let sample = crate::benchmarks::measure(10_000, || {
+            let _ = commands();
+        });
+
+        assert_eq!(sample.iterations, 10_000);
+        assert!(crate::benchmarks::average_duration(sample) >= std::time::Duration::from_nanos(0));
     }
 }

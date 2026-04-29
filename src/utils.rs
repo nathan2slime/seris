@@ -2,7 +2,7 @@
 
 use log::info;
 use serenity::{
-    all::{Context, EventHandler, Ready},
+    all::{Context, EventHandler, Ready, ResumedEvent},
     async_trait,
 };
 use std::sync::{
@@ -14,6 +14,12 @@ use std::sync::{
 #[derive(Default)]
 pub struct Handler {
     reminder_task_started: Arc<AtomicBool>,
+}
+
+impl Handler {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 #[async_trait]
@@ -28,5 +34,9 @@ impl EventHandler for Handler {
         {
             tokio::spawn(crate::reminders::run_point_reminder_loop(ctx.http.clone()));
         }
+    }
+
+    async fn resume(&self, _: Context, _: ResumedEvent) {
+        info!("Discord gateway resumed");
     }
 }

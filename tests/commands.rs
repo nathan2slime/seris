@@ -9,9 +9,13 @@ fn registers_expected_commands() {
         vec![
             "ping",
             "clear",
+            "epic",
             "apod",
             "get_random_anime",
-            "get_random_manga"
+            "get_random_manga",
+            "about",
+            "uptime",
+            "stats"
         ]
     );
 }

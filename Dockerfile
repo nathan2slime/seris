@@ -19,7 +19,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     autoconf \
-    wget \
     automake \
     libtool
 
@@ -32,6 +31,5 @@ RUN addgroup --system --gid 1001 seris
 RUN adduser --system --uid 1001 seris
 
 USER seris
-EXPOSE 8080
 
 CMD ["./entrypoint.sh"]
