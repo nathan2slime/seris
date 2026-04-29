@@ -11,10 +11,12 @@ use serenity::{
 };
 use std::{sync::Arc, time::Duration};
 
-const KAWAII_REMINDER_GIFS: [&str; 3] = [
-    "https://media.tenor.com/KDzt7A8t8WQAAAAC/anime-girl.gif",
-    "https://media.tenor.com/6kJd8PmdJxQAAAAC/anime-kawaii.gif",
-    "https://media.tenor.com/2roX3uxz_68AAAAC/anime-cute.gif",
+const KAWAII_REMINDER_GIFS: [&str; 5] = [
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3hvYTJpZXFrYTRmYnp4cWhjMTdoNzZhd2tkN3V5bmF0cXhxdDhnYSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/CiZ9e5IUPqeVFzc8Mp/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYThzamt5dmN1cmhsbXlydDR4dzQyb2VrMXhuZTE4c28yeGUyejJmciZlcD12MV9naWZzX3JlbGF0ZWQmY3Q9Zw/o3OWvKmIRpEkJkkNFs/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYThzamt5dmN1cmhsbXlydDR4dzQyb2VrMXhuZTE4c28yeGUyejJmciZlcD12MV9naWZzX3JlbGF0ZWQmY3Q9Zw/v2hDi1Se8UldZWWL4B/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3Z3hieGh3ZGJ6aG1nZWMwZmFvMXpxanBwZzJrcG05ZHQweWZ0bmV6ciZlcD12MV9naWZzX3JlbGF0ZWQmY3Q9Zw/DObgk0NPQh57OBQmzX/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3Z3hieGh3ZGJ6aG1nZWMwZmFvMXpxanBwZzJrcG05ZHQweWZ0bmV6ciZlcD12MV9naWZzX3JlbGF0ZWQmY3Q9Zw/dKBES1ypGwZdyFQBQ7/giphy.gif",
 ];
 
 fn reminder_times() -> [NaiveTime; 3] {
